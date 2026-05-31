@@ -94,3 +94,52 @@ tools/odrive-cansimple.ini
 # 递归忽略所有层级的Objects/Listings目录（如果你的工程输出在这些目录下）
 **/Objects/
 **/Listings/
+
+
+# IAR EWARM 工程忽略规则
+# 核心工程文件与备份
+*.ewd
+*.ewp
+*.ewt
+*.eww
+Backup of *.ew*
+
+# 构建中间文件
+*.o
+*.obj
+*.r43
+*.pbi
+*.dep
+*.lst
+*.map
+*.hex
+*.bin
+*.elf
+*.dni
+*.d43
+*.crf
+*.rsp
+*.dir
+
+# Ninja 构建系统文件
+.ninja_deps/
+.ninja_log/
+build.ninja
+
+# IAR 项目设置与配置文件
+**/settings/
+*.dnx
+*.cspy.ps1
+*.driver.xcl
+*.general.xcl
+*.wsdt
+
+# IDE 索引与浏览信息
+**/BrowseInfo/
+**/*.json
+compile_commands.json
+
+# 输出目录（编译结果）
+**/Obj/
+**/Exe/
+
