@@ -107,6 +107,17 @@ void get_regs(void** stack_ptr) {
 /**
 * @brief This function handles Hard fault interrupt.
 */
+#if defined(__CC_ARM) || defined(__ARMCC_VERSION)
+__asm void HardFault_Handler(void)
+{
+    IMPORT get_regs
+    TST lr, #4
+    ITE EQ
+    MRSEQ R0, MSP
+    MRSNE R0, PSP
+    B get_regs
+}
+#else
 __attribute__((naked))
 void HardFault_Handler(void)
 {
@@ -118,6 +129,7 @@ void HardFault_Handler(void)
     " b get_regs     \n\t"
   );
 }
+#endif
 
 /**
 * @brief This function handles Memory management fault.

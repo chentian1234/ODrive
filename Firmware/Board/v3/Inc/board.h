@@ -121,6 +121,8 @@ static const int current_meas_hz = CURRENT_MEAS_HZ;
 #define VBUS_S_DIVIDER_RATIO 19.0f
 #elif HW_VERSION_VOLTAGE == 24
 #define VBUS_S_DIVIDER_RATIO 11.0f
+#elif HW_VERSION_VOLTAGE == 12
+#define VBUS_S_DIVIDER_RATIO 11.0f
 #else
 #error "unknown board voltage"
 #endif
@@ -136,8 +138,9 @@ static inline bool board_write_config() { return true; }
 static inline void board_clear_config() { }
 static inline bool board_apply_config() { return true; }
 
-void system_init();
-bool board_init();
-void start_timers();
+void system_init(void);
+bool board_init(void);
+void start_timers(void);
 
 #endif // __BOARD_CONFIG_H
+

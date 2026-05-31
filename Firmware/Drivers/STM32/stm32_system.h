@@ -68,3 +68,4 @@ struct CriticalSectionContext {
 #endif
 
 #endif // __STM32_SYSTEM_H
+

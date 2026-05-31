@@ -66,3 +66,31 @@ GUI/build
 
 docs/reStructuredText/_build/
 tools/odrive-cansimple.ini
+
+# Keil MDK 工程忽略规则
+# 编译中间文件
+*.o
+*.d
+*._ia
+*.__i
+*.crf
+*.obj
+*.dep
+*.lst
+*.map
+*.lnp
+*.axf
+*.hex
+*.bin
+*.htm
+*.sct
+
+# Keil 工程配置相关（这些是本地配置，团队协作时也建议忽略）
+*.uvoptx
+*.uvguix.*
+*.bak
+*.BAT
+
+# 递归忽略所有层级的Objects/Listings目录（如果你的工程输出在这些目录下）
+**/Objects/
+**/Listings/

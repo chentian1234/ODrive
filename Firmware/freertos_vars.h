@@ -14,3 +14,4 @@ extern osThreadId defaultTaskHandle;
 extern const uint32_t stack_size_default_task;
 
 #endif /* __FREERTOS_H */
+
