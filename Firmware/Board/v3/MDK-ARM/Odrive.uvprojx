@@ -479,6 +479,11 @@
               <FileType>1</FileType>
               <FilePath>../Src/stm32f4xx_hal_timebase_tim.c</FilePath>
             </File>
+            <File>
+              <FileName>main.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\..\MotorControl\main.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
