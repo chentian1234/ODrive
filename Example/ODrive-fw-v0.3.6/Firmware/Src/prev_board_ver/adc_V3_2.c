@@ -3,13 +3,13 @@ ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 ADC_HandleTypeDef hadc3;
 
-/* ADC1åˆå§‹åŒ–å‡½æ•° */
+/* ADC1³õÊ¼»¯º¯Êı */
 void MX_ADC1_Init(void)
 {
   ADC_ChannelConfTypeDef sConfig;
   ADC_InjectionConfTypeDef sConfigInjected;
 
-    /**é…ç½®ADCçš„å…¨å±€ç‰¹æ€§ï¼ˆæ—¶é’Ÿã€åˆ†è¾¨ç‡ã€æ•°æ®å¯¹é½å’Œè½¬æ¢æ¬¡æ•°ï¼‰
+    /**ÅäÖÃADCµÄÈ«¾ÖÌØĞÔ£¨Ê±ÖÓ¡¢·Ö±æÂÊ¡¢Êı¾İ¶ÔÆëºÍ×ª»»´ÎÊı£©
     */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
@@ -28,7 +28,7 @@ void MX_ADC1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**é…ç½®æ‰€é€‰ADCå¸¸è§„é€šé“çš„åºåˆ—å™¨rankå’Œé‡‡æ ·æ—¶é—´
+    /**ÅäÖÃËùÑ¡ADC³£¹æÍ¨µÀµÄĞòÁĞÆ÷rankºÍ²ÉÑùÊ±¼ä
     */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
@@ -38,7 +38,7 @@ void MX_ADC1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**é…ç½®æ‰€é€‰ADCæ³¨å…¥é€šé“çš„åºåˆ—å™¨rankå’Œé‡‡æ ·æ—¶é—´
+    /**ÅäÖÃËùÑ¡ADC×¢ÈëÍ¨µÀµÄĞòÁĞÆ÷rankºÍ²ÉÑùÊ±¼ä
     */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_0;
   sConfigInjected.InjectedRank = 1;
@@ -55,7 +55,7 @@ void MX_ADC1_Init(void)
   }
 
 }
-/* ADC2åˆå§‹åŒ–å‡½æ•° */
+/* ADC2³õÊ¼»¯º¯Êı */
 void MX_ADC2_Init(void)
 {
   ADC_ChannelConfTypeDef sConfig;
@@ -80,7 +80,7 @@ void MX_ADC2_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**é…ç½®æ‰€é€‰ADCå¸¸è§„é€šé“çš„åºåˆ—å™¨rankå’Œé‡‡æ ·æ—¶é—´
+    /**ÅäÖÃËùÑ¡ADC³£¹æÍ¨µÀµÄĞòÁĞÆ÷rankºÍ²ÉÑùÊ±¼ä
     */
   sConfig.Channel = ADC_CHANNEL_13;
   sConfig.Rank = 1;
@@ -90,7 +90,7 @@ void MX_ADC2_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**é…ç½®æ‰€é€‰ADCæ³¨å…¥é€šé“çš„åºåˆ—å™¨rankå’Œé‡‡æ ·æ—¶é—´
+    /**ÅäÖÃËùÑ¡ADC×¢ÈëÍ¨µÀµÄĞòÁĞÆ÷rankºÍ²ÉÑùÊ±¼ä
     */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_10;
   sConfigInjected.InjectedRank = 1;

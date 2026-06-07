@@ -1,8 +1,9 @@
 
-#include <utils.h>
-#include <math.h>
-#include <cmsis_os.h>
-#include <stm32f4xx_hal.h>
+#include "utils.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "math.h"
+#include "stm32f4xx_hal.h"
 
 /* ========================================================================== */
 /*                         SVM算法使用的预计算常量                              */
@@ -472,9 +473,9 @@ int mod(int dividend, int divisor) {
 // 如果截止时间已经过去，返回值为0（除非截止时间在非常久远的过去）
 uint32_t deadline_to_timeout(uint32_t deadline_ms) {
     // 获取当前系统时间（毫秒）
-    // osKernelSysTick() 返回RTOS内核的系统滴答数
+    // xTaskGetTickCount() 返回RTOS内核的系统滴答数
     // 通过 (1000 * tick) / frequency 转换为毫秒
-    uint32_t now_ms = (uint32_t)((1000ull * (uint64_t)osKernelSysTick()) / osKernelSysTickFrequency);
+    uint32_t now_ms = (uint32_t)((1000ull * (uint64_t)xTaskGetTickCount()) / configTICK_RATE_HZ);
 
     // 计算截止时间与当前时间的差值
     // 利用无符号整数减法的溢出特性，即使系统时钟溢出也能正确计算
@@ -507,7 +508,7 @@ uint32_t deadline_to_timeout(uint32_t deadline_ms) {
 // @brief: 根据超时时长计算出对应的截止时间
 uint32_t timeout_to_deadline(uint32_t timeout_ms) {
     // 获取当前系统时间（毫秒）
-    uint32_t now_ms = (uint32_t)((1000ull * (uint64_t)osKernelSysTick()) / osKernelSysTickFrequency);
+    uint32_t now_ms = (uint32_t)((1000ull * (uint64_t)xTaskGetTickCount()) / configTICK_RATE_HZ);
     // 截止时间 = 当前时间 + 超时时长
     return now_ms + timeout_ms;
 }
@@ -576,7 +577,7 @@ uint32_t micros(void) {
  * @warning 忙等待会持续占用CPU资源，在延时期间无法执行其他任务。
  *          仅适用于短时间延时（通常<100微秒）。
  *          长时间延时建议使用：
- *          - RTOS的任务延时函数（如 osDelay()）
+ *          - RTOS的任务延时函数（如 vTaskDelay()）
  *          - 定时器中断回调
  *          - DMA+定时器硬件方式
  */

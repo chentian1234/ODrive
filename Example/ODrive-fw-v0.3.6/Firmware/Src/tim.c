@@ -1,29 +1,29 @@
 /*
  * ============================================================================
- * æ–‡ä»¶å: tim.c
+ * ÎÄ¼þÃû: tim.c
  *
- * æ–‡ä»¶ç”¨é€”:
- *   æœ¬æ–‡ä»¶å®žçŽ°STM32F4å®šæ—¶å™¨å¤–è®¾çš„é…ç½®ï¼Œæ¶µç›–PWMè¾“å‡ºã€ç¼–ç å™¨æŽ¥å£å’ŒADCè§¦å‘åŠŸèƒ½ã€‚
- *   å®šæ—¶å™¨æ˜¯ODriveç”µæœºæŽ§åˆ¶ç³»ç»Ÿçš„æ ¸å¿ƒï¼Œè´Ÿè´£ç”ŸæˆPWMæ³¢å½¢é©±åŠ¨MOSFETæ¡¥è‡‚ï¼Œ
- *   åŒæ—¶ç²¾ç¡®æŽ§åˆ¶ADCé‡‡æ ·æ—¶æœºä»¥èŽ·å–ç”µæœºç”µæµã€‚
+ * ÎÄ¼þÓÃÍ¾:
+ *   ±¾ÎÄ¼þÊµÏÖSTM32F4¶¨Ê±Æ÷ÍâÉèµÄÅäÖÃ£¬º­¸ÇPWMÊä³ö¡¢±àÂëÆ÷½Ó¿ÚºÍADC´¥·¢¹¦ÄÜ¡£
+ *   ¶¨Ê±Æ÷ÊÇODriveµç»ú¿ØÖÆÏµÍ³µÄºËÐÄ£¬¸ºÔðÉú³ÉPWM²¨ÐÎÇý¶¯MOSFETÇÅ±Û£¬
+ *   Í¬Ê±¾«È·¿ØÖÆADC²ÉÑùÊ±»úÒÔ»ñÈ¡µç»úµçÁ÷¡£
  *
- * ä¸»è¦åŠŸèƒ½æ¨¡å—ï¼š
- *   1. TIM1ï¼šM0ç”µæœºPWMè¾“å‡ºï¼ˆé«˜çº§å®šæ—¶å™¨ï¼Œä¸‰ç›¸+æ­»åŒº+ADCè§¦å‘ï¼‰
- *   2. TIM8ï¼šM1ç”µæœºPWMè¾“å‡ºï¼ˆé«˜çº§å®šæ—¶å™¨ï¼Œä¸‰ç›¸+æ­»åŒº+ADCè§¦å‘ï¼‰
- *   3. TIM2ï¼šè¾…åŠ©é©±åŠ¨å™¨PWMè¾“å‡ºï¼ˆä½Ž/é«˜ç«¯é©±åŠ¨ï¼‰
- *   4. TIM3ï¼šM0ç”µæœºç¼–ç å™¨æŽ¥å£ï¼ˆ4å€é¢‘ï¼Œ4çº§æ»¤æ³¢ï¼‰
- *   5. TIM4ï¼šM1ç”µæœºç¼–ç å™¨æŽ¥å£ï¼ˆ4å€é¢‘ï¼Œ4çº§æ»¤æ³¢ï¼‰
- *   6. OC4_PWM_Override()ï¼šé…ç½®OC4é€šé“ä¸ºPWMæ¨¡å¼ç”¨äºŽADCè§¦å‘
- *   7. MSPå±‚åˆå§‹åŒ–/åŽ»åˆå§‹åŒ–ï¼šPWMè¾“å‡ºå¼•è„šé…ç½®ã€ç¼–ç å™¨å¼•è„šé…ç½®
+ * Ö÷Òª¹¦ÄÜÄ£¿é£º
+ *   1. TIM1£ºM0µç»úPWMÊä³ö£¨¸ß¼¶¶¨Ê±Æ÷£¬ÈýÏà+ËÀÇø+ADC´¥·¢£©
+ *   2. TIM8£ºM1µç»úPWMÊä³ö£¨¸ß¼¶¶¨Ê±Æ÷£¬ÈýÏà+ËÀÇø+ADC´¥·¢£©
+ *   3. TIM2£º¸¨ÖúÇý¶¯Æ÷PWMÊä³ö£¨µÍ/¸ß¶ËÇý¶¯£©
+ *   4. TIM3£ºM0µç»ú±àÂëÆ÷½Ó¿Ú£¨4±¶Æµ£¬4¼¶ÂË²¨£©
+ *   5. TIM4£ºM1µç»ú±àÂëÆ÷½Ó¿Ú£¨4±¶Æµ£¬4¼¶ÂË²¨£©
+ *   6. OC4_PWM_Override()£ºÅäÖÃOC4Í¨µÀÎªPWMÄ£Ê½ÓÃÓÚADC´¥·¢
+ *   7. MSP²ã³õÊ¼»¯/È¥³õÊ¼»¯£ºPWMÊä³öÒý½ÅÅäÖÃ¡¢±àÂëÆ÷Òý½ÅÅäÖÃ
  *
- * å®šæ—¶å™¨åˆ†å·¥:
- *   - TIM1/TIM8ï¼šä¸­å¤®å¯¹é½PWMæ¨¡å¼ï¼Œäº§ç”ŸFOCæ‰€éœ€çš„å¯¹ç§°PWMæ³¢å½¢
- *   - TIM1 TRGOï¼šè§¦å‘ADCæ³¨å…¥è½¬æ¢ï¼ˆM0ç”µæµé‡‡æ ·ï¼‰
- *   - TIM8 TRGOï¼šè§¦å‘ADCå¸¸è§„è½¬æ¢ï¼ˆM1ç”µæµé‡‡æ ·ï¼‰
- *   - TIM3/TIM4ï¼šç¡¬ä»¶ç¼–ç å™¨æ¨¡å¼ï¼Œè‡ªåŠ¨è®¡ç®—è„‰å†²æ•°å’Œæ–¹å‘
+ * ¶¨Ê±Æ÷·Ö¹¤:
+ *   - TIM1/TIM8£ºÖÐÑë¶ÔÆëPWMÄ£Ê½£¬²úÉúFOCËùÐèµÄ¶Ô³ÆPWM²¨ÐÎ
+ *   - TIM1 TRGO£º´¥·¢ADC×¢Èë×ª»»£¨M0µçÁ÷²ÉÑù£©
+ *   - TIM8 TRGO£º´¥·¢ADC³£¹æ×ª»»£¨M1µçÁ÷²ÉÑù£©
+ *   - TIM3/TIM4£ºÓ²¼þ±àÂëÆ÷Ä£Ê½£¬×Ô¶¯¼ÆËãÂö³åÊýºÍ·½Ïò
  *
- * ä½œè€…: ODrive Robotics
- * ç‰ˆæœ¬: v0.3.6
+ * ×÷Õß: ODrive Robotics
+ * °æ±¾: v0.3.6
  * ============================================================================
  */
 
@@ -35,20 +35,20 @@
 /* USER CODE BEGIN 0 */
 
 /**
- * @brief OC4é€šé“PWMè¾“å‡ºé…ç½®å‡½æ•°
+ * @brief OC4Í¨µÀPWMÊä³öÅäÖÃº¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * é…ç½®å®šæ—¶å™¨çš„é€šé“4(OC4)ä¸ºPWM2æ¨¡å¼ï¼Œç”¨äºŽè§¦å‘ADCé‡‡æ ·ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ÅäÖÃ¶¨Ê±Æ÷µÄÍ¨µÀ4(OC4)ÎªPWM2Ä£Ê½£¬ÓÃÓÚ´¥·¢ADC²ÉÑù¡£
  * 
- * ä¸ºä»€ä¹ˆéœ€è¦è¿™ä¸ªå‡½æ•°ï¼š
- * åœ¨ç”µæœºæŽ§åˆ¶ä¸­ï¼ŒADCéœ€è¦åœ¨PWMå‘¨æœŸçš„ç‰¹å®šæ—¶åˆ»é‡‡æ ·ç”µæµä¿¡å·ã€‚
- * é€šè¿‡å®šæ—¶å™¨æ¯”è¾ƒè¾“å‡º(OC4 PWM)å¯ä»¥ç²¾ç¡®æŽ§åˆ¶ADCçš„è§¦å‘æ—¶æœºã€‚
+ * ÎªÊ²Ã´ÐèÒªÕâ¸öº¯Êý£º
+ * ÔÚµç»ú¿ØÖÆÖÐ£¬ADCÐèÒªÔÚPWMÖÜÆÚµÄÌØ¶¨Ê±¿Ì²ÉÑùµçÁ÷ÐÅºÅ¡£
+ * Í¨¹ý¶¨Ê±Æ÷±È½ÏÊä³ö(OC4 PWM)¿ÉÒÔ¾«È·¿ØÖÆADCµÄ´¥·¢Ê±»ú¡£
  * 
- * æ³¨æ„ï¼šCubeMXä¸å…è®¸åœ¨æ²¡æœ‰è¾“å‡ºå¼•è„šçš„æƒ…å†µä¸‹é…ç½®PWMæ¨¡å¼ï¼Œ
- * æ‰€ä»¥æ­¤å‡½æ•°ç»•è¿‡CubeMXé™åˆ¶ï¼Œç›´æŽ¥é…ç½®OC4ä¸ºPWMæ¨¡å¼ã€‚
- * æ¯”è¾ƒå¯„å­˜å™¨è®¾ä¸º1(ä¸èƒ½ä¸º0ï¼Œå¦åˆ™æ— æ³•è§¦å‘)ã€‚
+ * ×¢Òâ£ºCubeMX²»ÔÊÐíÔÚÃ»ÓÐÊä³öÒý½ÅµÄÇé¿öÏÂÅäÖÃPWMÄ£Ê½£¬
+ * ËùÒÔ´Ëº¯ÊýÈÆ¹ýCubeMXÏÞÖÆ£¬Ö±½ÓÅäÖÃOC4ÎªPWMÄ£Ê½¡£
+ * ±È½Ï¼Ä´æÆ÷ÉèÎª1(²»ÄÜÎª0£¬·ñÔòÎÞ·¨´¥·¢)¡£
  * 
- * @param htim: å®šæ—¶å™¨å¥æŸ„æŒ‡é’ˆ
+ * @param htim: ¶¨Ê±Æ÷¾ä±úÖ¸Õë
  */
 void OC4_PWM_Override(TIM_HandleTypeDef* htim) {
 
@@ -73,19 +73,19 @@ TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim8;
 
 /**
- * @brief TIM1 åˆå§‹åŒ–å‡½æ•°
+ * @brief TIM1 ³õÊ¼»¯º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * é…ç½®TIM1é«˜çº§å®šæ—¶å™¨ï¼Œç”¨äºŽM0ç”µæœºçš„PWMè¾“å‡ºå’ŒADCè§¦å‘ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ÅäÖÃTIM1¸ß¼¶¶¨Ê±Æ÷£¬ÓÃÓÚM0µç»úµÄPWMÊä³öºÍADC´¥·¢¡£
  * 
- * ä¸»è¦é…ç½®ï¼š
- * - è®¡æ•°å™¨æ¨¡å¼: ä¸­å¤®å¯¹é½æ¨¡å¼3 (CENTERALIGNED3)
- * - å‘¨æœŸ: TIM_1_8_PERIOD_CLOCKS (ç”±ç”µæœºæŽ§åˆ¶é¢‘çŽ‡å†³å®š)
- * - PWMé€šé“: CH1/CH2/CH3 ç”¨äºŽé©±åŠ¨M0ç”µæœºä¸‰ç›¸
- * - CH4: é…ç½®ä¸ºPWMæ¨¡å¼ç”¨äºŽADCè§¦å‘
- * - ä¸»è¾“å‡ºè§¦å‘: TIM_TRGO_UPDATE (æ›´æ–°äº‹ä»¶è§¦å‘)
- * - æ­»åŒºæ—¶é—´: TIM_1_8_DEADTIME_CLOCKS
- * - åˆ¹è½¦: ç¦ç”¨
+ * Ö÷ÒªÅäÖÃ£º
+ * - ¼ÆÊýÆ÷Ä£Ê½: ÖÐÑë¶ÔÆëÄ£Ê½3 (CENTERALIGNED3)
+ * - ÖÜÆÚ: TIM_1_8_PERIOD_CLOCKS (ÓÉµç»ú¿ØÖÆÆµÂÊ¾ö¶¨)
+ * - PWMÍ¨µÀ: CH1/CH2/CH3 ÓÃÓÚÇý¶¯M0µç»úÈýÏà
+ * - CH4: ÅäÖÃÎªPWMÄ£Ê½ÓÃÓÚADC´¥·¢
+ * - Ö÷Êä³ö´¥·¢: TIM_TRGO_UPDATE (¸üÐÂÊÂ¼þ´¥·¢)
+ * - ËÀÇøÊ±¼ä: TIM_1_8_DEADTIME_CLOCKS
+ * - É²³µ: ½ûÓÃ
  */
 void MX_TIM1_Init(void)
 {
@@ -172,16 +172,16 @@ void MX_TIM1_Init(void)
 
 }
 /**
- * @brief TIM2 åˆå§‹åŒ–å‡½æ•°
+ * @brief TIM2 ³õÊ¼»¯º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * é…ç½®TIM2é€šç”¨å®šæ—¶å™¨ï¼Œç”¨äºŽè¾…åŠ©é©±åŠ¨å™¨çš„PWMè¾“å‡ºã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ÅäÖÃTIM2Í¨ÓÃ¶¨Ê±Æ÷£¬ÓÃÓÚ¸¨ÖúÇý¶¯Æ÷µÄPWMÊä³ö¡£
  * 
- * ä¸»è¦é…ç½®ï¼š
- * - è®¡æ•°å™¨æ¨¡å¼: ä¸­å¤®å¯¹é½æ¨¡å¼3 (CENTERALIGNED3)
- * - å‘¨æœŸ: TIM_APB1_PERIOD_CLOCKS (APB1é¢‘çŽ‡ç›¸å…³)
- * - CH3: PWMè¾“å‡ºç”¨äºŽè¾…åŠ©é©±åŠ¨å™¨ä½Žä¾§
- * - CH4: PWMè¾“å‡ºç”¨äºŽè¾…åŠ©é©±åŠ¨å™¨é«˜ä¾§ (ç‰¹æ®Šè„‰å®½æŽ§åˆ¶)
+ * Ö÷ÒªÅäÖÃ£º
+ * - ¼ÆÊýÆ÷Ä£Ê½: ÖÐÑë¶ÔÆëÄ£Ê½3 (CENTERALIGNED3)
+ * - ÖÜÆÚ: TIM_APB1_PERIOD_CLOCKS (APB1ÆµÂÊÏà¹Ø)
+ * - CH3: PWMÊä³öÓÃÓÚ¸¨ÖúÇý¶¯Æ÷µÍ²à
+ * - CH4: PWMÊä³öÓÃÓÚ¸¨ÖúÇý¶¯Æ÷¸ß²à (ÌØÊâÂö¿í¿ØÖÆ)
  */
 void MX_TIM2_Init(void)
 {
@@ -225,19 +225,19 @@ void MX_TIM2_Init(void)
 
 }
 /**
- * @brief TIM3 åˆå§‹åŒ–å‡½æ•°
+ * @brief TIM3 ³õÊ¼»¯º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * é…ç½®TIM3é€šç”¨å®šæ—¶å™¨ä¸ºç¼–ç å™¨æ¨¡å¼ï¼Œç”¨äºŽè¯»å–M0ç”µæœºçš„ç¼–ç å™¨ä¿¡å·ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ÅäÖÃTIM3Í¨ÓÃ¶¨Ê±Æ÷Îª±àÂëÆ÷Ä£Ê½£¬ÓÃÓÚ¶ÁÈ¡M0µç»úµÄ±àÂëÆ÷ÐÅºÅ¡£
  * 
- * ä¸»è¦é…ç½®ï¼š
- * - ç¼–ç å™¨æ¨¡å¼: TIM_ENCODERMODE_TI12 (TI1å’ŒTI2éƒ½è®¡æ•°ï¼Œ4å€é¢‘)
- * - IC1: é€šé“1è¾“å…¥æ•èŽ·ï¼Œä¸Šå‡æ²¿è§¦å‘ï¼Œç›´æŽ¥TIè¾“å…¥ï¼Œ4çº§æ»¤æ³¢
- * - IC2: é€šé“2è¾“å…¥æ•èŽ·ï¼Œä¸Šå‡æ²¿è§¦å‘ï¼Œç›´æŽ¥TIè¾“å…¥ï¼Œ4çº§æ»¤æ³¢
- * - å‘¨æœŸ: 0xFFFF (16ä½æœ€å¤§å€¼)
- * - æ»¤æ³¢å™¨: 4 (æŠ‘åˆ¶ç¼–ç å™¨ä¿¡å·å™ªå£°)
+ * Ö÷ÒªÅäÖÃ£º
+ * - ±àÂëÆ÷Ä£Ê½: TIM_ENCODERMODE_TI12 (TI1ºÍTI2¶¼¼ÆÊý£¬4±¶Æµ)
+ * - IC1: Í¨µÀ1ÊäÈë²¶»ñ£¬ÉÏÉýÑØ´¥·¢£¬Ö±½ÓTIÊäÈë£¬4¼¶ÂË²¨
+ * - IC2: Í¨µÀ2ÊäÈë²¶»ñ£¬ÉÏÉýÑØ´¥·¢£¬Ö±½ÓTIÊäÈë£¬4¼¶ÂË²¨
+ * - ÖÜÆÚ: 0xFFFF (16Î»×î´óÖµ)
+ * - ÂË²¨Æ÷: 4 (ÒÖÖÆ±àÂëÆ÷ÐÅºÅÔëÉù)
  * 
- * æ³¨æ„ï¼šç¼–ç å™¨æ¨¡å¼è‡ªåŠ¨è®¡ç®—è„‰å†²æ•°å’Œæ–¹å‘ï¼Œæ— éœ€è½¯ä»¶å¹²é¢„
+ * ×¢Òâ£º±àÂëÆ÷Ä£Ê½×Ô¶¯¼ÆËãÂö³åÊýºÍ·½Ïò£¬ÎÞÐèÈí¼þ¸ÉÔ¤
  */
 void MX_TIM3_Init(void)
 {
@@ -272,16 +272,16 @@ void MX_TIM3_Init(void)
 
 }
 /**
- * @brief TIM4 åˆå§‹åŒ–å‡½æ•°
+ * @brief TIM4 ³õÊ¼»¯º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * é…ç½®TIM4é€šç”¨å®šæ—¶å™¨ä¸ºç¼–ç å™¨æ¨¡å¼ï¼Œç”¨äºŽè¯»å–M1ç”µæœºçš„ç¼–ç å™¨ä¿¡å·ã€‚
- * é…ç½®ä¸ŽTIM3ç›¸åŒï¼Œç”¨äºŽM1ç”µæœºçš„ç¼–ç å™¨æŽ¥å£ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ÅäÖÃTIM4Í¨ÓÃ¶¨Ê±Æ÷Îª±àÂëÆ÷Ä£Ê½£¬ÓÃÓÚ¶ÁÈ¡M1µç»úµÄ±àÂëÆ÷ÐÅºÅ¡£
+ * ÅäÖÃÓëTIM3ÏàÍ¬£¬ÓÃÓÚM1µç»úµÄ±àÂëÆ÷½Ó¿Ú¡£
  * 
- * ä¸»è¦é…ç½®ï¼š
- * - ç¼–ç å™¨æ¨¡å¼: TIM_ENCODERMODE_TI12 (TI1å’ŒTI2éƒ½è®¡æ•°ï¼Œ4å€é¢‘)
- * - IC1/IC2: è¾“å…¥æ•èŽ·ï¼Œä¸Šå‡æ²¿è§¦å‘ï¼Œ4çº§æ»¤æ³¢
- * - å‘¨æœŸ: 0xFFFF (16ä½æœ€å¤§å€¼)
+ * Ö÷ÒªÅäÖÃ£º
+ * - ±àÂëÆ÷Ä£Ê½: TIM_ENCODERMODE_TI12 (TI1ºÍTI2¶¼¼ÆÊý£¬4±¶Æµ)
+ * - IC1/IC2: ÊäÈë²¶»ñ£¬ÉÏÉýÑØ´¥·¢£¬4¼¶ÂË²¨
+ * - ÖÜÆÚ: 0xFFFF (16Î»×î´óÖµ)
  */
 void MX_TIM4_Init(void)
 {
@@ -316,21 +316,21 @@ void MX_TIM4_Init(void)
 
 }
 /**
- * @brief TIM8 åˆå§‹åŒ–å‡½æ•°
+ * @brief TIM8 ³õÊ¼»¯º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * é…ç½®TIM8é«˜çº§å®šæ—¶å™¨ï¼Œç”¨äºŽM1ç”µæœºçš„PWMè¾“å‡ºã€‚
- * ä¸ŽTIM1åŠŸèƒ½ç±»ä¼¼ï¼Œä½†ç”¨äºŽç¬¬äºŒä¸ªç”µæœºè½´ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ÅäÖÃTIM8¸ß¼¶¶¨Ê±Æ÷£¬ÓÃÓÚM1µç»úµÄPWMÊä³ö¡£
+ * ÓëTIM1¹¦ÄÜÀàËÆ£¬µ«ÓÃÓÚµÚ¶þ¸öµç»úÖá¡£
  * 
- * ä¸»è¦é…ç½®ï¼š
- * - è®¡æ•°å™¨æ¨¡å¼: ä¸­å¤®å¯¹é½æ¨¡å¼3 (CENTERALIGNED3)
- * - å‘¨æœŸ: TIM_1_8_PERIOD_CLOCKS (ä¸ŽTIM1ç›¸åŒ)
- * - PWMé€šé“: CH1/CH2/CH3 ç”¨äºŽé©±åŠ¨M1ç”µæœºä¸‰ç›¸
- * - ä¸»è¾“å‡ºè§¦å‘: TIM_TRGO_UPDATE (ç”¨äºŽè§¦å‘ADCé‡‡æ ·)
- * - æ­»åŒºæ—¶é—´: TIM_1_8_DEADTIME_CLOCKS
- * - ä¸­æ–­: ä½¿èƒ½TIM8_TRG_COM_TIM14_IRQn (ä¼˜å…ˆçº§0)
+ * Ö÷ÒªÅäÖÃ£º
+ * - ¼ÆÊýÆ÷Ä£Ê½: ÖÐÑë¶ÔÆëÄ£Ê½3 (CENTERALIGNED3)
+ * - ÖÜÆÚ: TIM_1_8_PERIOD_CLOCKS (ÓëTIM1ÏàÍ¬)
+ * - PWMÍ¨µÀ: CH1/CH2/CH3 ÓÃÓÚÇý¶¯M1µç»úÈýÏà
+ * - Ö÷Êä³ö´¥·¢: TIM_TRGO_UPDATE (ÓÃÓÚ´¥·¢ADC²ÉÑù)
+ * - ËÀÇøÊ±¼ä: TIM_1_8_DEADTIME_CLOCKS
+ * - ÖÐ¶Ï: Ê¹ÄÜTIM8_TRG_COM_TIM14_IRQn (ÓÅÏÈ¼¶0)
  * 
- * æ³¨æ„ï¼šTIM8çš„ä¸­æ–­ç”¨äºŽADCé‡‡æ ·è§¦å‘å’Œæ—¶åŸºæ›´æ–°
+ * ×¢Òâ£ºTIM8µÄÖÐ¶ÏÓÃÓÚADC²ÉÑù´¥·¢ºÍÊ±»ù¸üÐÂ
  */
 void MX_TIM8_Init(void)
 {
@@ -395,13 +395,13 @@ void MX_TIM8_Init(void)
 }
 
 /**
- * @brief TIMåŸºç¡€å®šæ—¶å™¨åº•å±‚åˆå§‹åŒ–å›žè°ƒå‡½æ•°
+ * @brief TIM»ù´¡¶¨Ê±Æ÷µ×²ã³õÊ¼»¯»Øµ÷º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å½“è°ƒç”¨HAL_TIM_Base_Init()æ—¶ï¼ŒHALåº“ä¼šè‡ªåŠ¨è°ƒç”¨æ­¤å‡½æ•°æ¥é…ç½®TIM1çš„åº•å±‚ç¡¬ä»¶èµ„æºã€‚
- * ä¸»è¦ä½¿èƒ½TIM1æ—¶é’Ÿï¼Œç”¨äºŽç”µæœºM0çš„PWMè¾“å‡ºæŽ§åˆ¶ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * µ±µ÷ÓÃHAL_TIM_Base_Init()Ê±£¬HAL¿â»á×Ô¶¯µ÷ÓÃ´Ëº¯ÊýÀ´ÅäÖÃTIM1µÄµ×²ãÓ²¼þ×ÊÔ´¡£
+ * Ö÷ÒªÊ¹ÄÜTIM1Ê±ÖÓ£¬ÓÃÓÚµç»úM0µÄPWMÊä³ö¿ØÖÆ¡£
  * 
- * @param tim_baseHandle: å®šæ—¶å™¨å¥æŸ„æŒ‡é’ˆ
+ * @param tim_baseHandle: ¶¨Ê±Æ÷¾ä±úÖ¸Õë
  */
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 {
@@ -411,7 +411,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE BEGIN TIM1_MspInit 0 */
 
   /* USER CODE END TIM1_MspInit 0 */
-    /* ä½¿èƒ½TIM1æ—¶é’Ÿ */
+    /* Ê¹ÄÜTIM1Ê±ÖÓ */
     __HAL_RCC_TIM1_CLK_ENABLE();
   /* USER CODE BEGIN TIM1_MspInit 1 */
 
@@ -420,14 +420,14 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 }
 
 /**
- * @brief TIM PWMåº•å±‚åˆå§‹åŒ–å›žè°ƒå‡½æ•°
+ * @brief TIM PWMµ×²ã³õÊ¼»¯»Øµ÷º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å½“è°ƒç”¨HAL_TIM_PWM_Init()æ—¶ï¼ŒHALåº“ä¼šè‡ªåŠ¨è°ƒç”¨æ­¤å‡½æ•°æ¥é…ç½®TIM2/TIM8çš„åº•å±‚ç¡¬ä»¶èµ„æºã€‚
- * - TIM2: ä½¿èƒ½æ—¶é’Ÿï¼Œç”¨äºŽè¾…åŠ©é©±åŠ¨å™¨PWMè¾“å‡º
- * - TIM8: ä½¿èƒ½æ—¶é’Ÿå¹¶é…ç½®ä¸­æ–­(ä¼˜å…ˆçº§0)ï¼Œç”¨äºŽç”µæœºM1çš„PWMè¾“å‡º
+ * ¹¦ÄÜËµÃ÷£º
+ * µ±µ÷ÓÃHAL_TIM_PWM_Init()Ê±£¬HAL¿â»á×Ô¶¯µ÷ÓÃ´Ëº¯ÊýÀ´ÅäÖÃTIM2/TIM8µÄµ×²ãÓ²¼þ×ÊÔ´¡£
+ * - TIM2: Ê¹ÄÜÊ±ÖÓ£¬ÓÃÓÚ¸¨ÖúÇý¶¯Æ÷PWMÊä³ö
+ * - TIM8: Ê¹ÄÜÊ±ÖÓ²¢ÅäÖÃÖÐ¶Ï(ÓÅÏÈ¼¶0)£¬ÓÃÓÚµç»úM1µÄPWMÊä³ö
  * 
- * @param tim_pwmHandle: å®šæ—¶å™¨å¥æŸ„æŒ‡é’ˆ
+ * @param tim_pwmHandle: ¶¨Ê±Æ÷¾ä±úÖ¸Õë
  */
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
 {
@@ -437,7 +437,7 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE BEGIN TIM2_MspInit 0 */
 
   /* USER CODE END TIM2_MspInit 0 */
-    /* ä½¿èƒ½TIM2æ—¶é’Ÿ */
+    /* Ê¹ÄÜTIM2Ê±ÖÓ */
     __HAL_RCC_TIM2_CLK_ENABLE();
   /* USER CODE BEGIN TIM2_MspInit 1 */
 
@@ -448,10 +448,10 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE BEGIN TIM8_MspInit 0 */
 
   /* USER CODE END TIM8_MspInit 0 */
-    /* ä½¿èƒ½TIM8æ—¶é’Ÿ */
+    /* Ê¹ÄÜTIM8Ê±ÖÓ */
     __HAL_RCC_TIM8_CLK_ENABLE();
 
-    /* ä½¿èƒ½TIM8ä¸­æ–­ - ä¼˜å…ˆçº§0(æœ€é«˜) */
+    /* Ê¹ÄÜTIM8ÖÐ¶Ï - ÓÅÏÈ¼¶0(×î¸ß) */
     HAL_NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);
   /* USER CODE BEGIN TIM8_MspInit 1 */
@@ -461,14 +461,14 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
 }
 
 /**
- * @brief TIMç¼–ç å™¨æ¨¡å¼åº•å±‚åˆå§‹åŒ–å›žè°ƒå‡½æ•°
+ * @brief TIM±àÂëÆ÷Ä£Ê½µ×²ã³õÊ¼»¯»Øµ÷º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å½“è°ƒç”¨HAL_TIM_Encoder_Init()æ—¶ï¼ŒHALåº“ä¼šè‡ªåŠ¨è°ƒç”¨æ­¤å‡½æ•°æ¥é…ç½®TIM3/TIM4çš„åº•å±‚ç¡¬ä»¶èµ„æºã€‚
- * - TIM3: é…ç½®PB4/PB5ä¸ºå¤ç”¨åŠŸèƒ½ï¼Œè¿žæŽ¥M0ç¼–ç å™¨çš„A/Bç›¸ä¿¡å·
- * - TIM4: é…ç½®PB6/PB7ä¸ºå¤ç”¨åŠŸèƒ½ï¼Œè¿žæŽ¥M1ç¼–ç å™¨çš„A/Bç›¸ä¿¡å·
+ * ¹¦ÄÜËµÃ÷£º
+ * µ±µ÷ÓÃHAL_TIM_Encoder_Init()Ê±£¬HAL¿â»á×Ô¶¯µ÷ÓÃ´Ëº¯ÊýÀ´ÅäÖÃTIM3/TIM4µÄµ×²ãÓ²¼þ×ÊÔ´¡£
+ * - TIM3: ÅäÖÃPB4/PB5Îª¸´ÓÃ¹¦ÄÜ£¬Á¬½ÓM0±àÂëÆ÷µÄA/BÏàÐÅºÅ
+ * - TIM4: ÅäÖÃPB6/PB7Îª¸´ÓÃ¹¦ÄÜ£¬Á¬½ÓM1±àÂëÆ÷µÄA/BÏàÐÅºÅ
  * 
- * @param tim_encoderHandle: å®šæ—¶å™¨å¥æŸ„æŒ‡é’ˆ
+ * @param tim_encoderHandle: ¶¨Ê±Æ÷¾ä±úÖ¸Õë
  */
 void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
 {
@@ -479,12 +479,12 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
   /* USER CODE BEGIN TIM3_MspInit 0 */
 
   /* USER CODE END TIM3_MspInit 0 */
-    /* ä½¿èƒ½TIM3æ—¶é’Ÿ */
+    /* Ê¹ÄÜTIM3Ê±ÖÓ */
     __HAL_RCC_TIM3_CLK_ENABLE();
   
-    /**TIM3 GPIOé…ç½®    
-    PB4     ------> TIM3_CH1 (M0ç¼–ç å™¨Aç›¸)
-    PB5     ------> TIM3_CH2 (M0ç¼–ç å™¨Bç›¸)
+    /**TIM3 GPIOÅäÖÃ    
+    PB4     ------> TIM3_CH1 (M0±àÂëÆ÷AÏà)
+    PB5     ------> TIM3_CH2 (M0±àÂëÆ÷BÏà)
     */
     GPIO_InitStruct.Pin = M0_ENC_A_Pin|M0_ENC_B_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -502,12 +502,12 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
   /* USER CODE BEGIN TIM4_MspInit 0 */
 
   /* USER CODE END TIM4_MspInit 0 */
-    /* ä½¿èƒ½TIM4æ—¶é’Ÿ */
+    /* Ê¹ÄÜTIM4Ê±ÖÓ */
     __HAL_RCC_TIM4_CLK_ENABLE();
   
-    /**TIM4 GPIOé…ç½®    
-    PB6     ------> TIM4_CH1 (M1ç¼–ç å™¨Aç›¸)
-    PB7     ------> TIM4_CH2 (M1ç¼–ç å™¨Bç›¸)
+    /**TIM4 GPIOÅäÖÃ    
+    PB6     ------> TIM4_CH1 (M1±àÂëÆ÷AÏà)
+    PB7     ------> TIM4_CH2 (M1±àÂëÆ÷BÏà)
     */
     GPIO_InitStruct.Pin = M1_ENC_A_Pin|M1_ENC_B_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -523,15 +523,15 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
 }
 
 /**
- * @brief TIM GPIOåŽç½®åˆå§‹åŒ–å›žè°ƒå‡½æ•°
+ * @brief TIM GPIOºóÖÃ³õÊ¼»¯»Øµ÷º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * åœ¨å®šæ—¶å™¨åˆå§‹åŒ–å®ŒæˆåŽè°ƒç”¨ï¼Œç”¨äºŽé…ç½®å„å®šæ—¶å™¨çš„PWMè¾“å‡ºå¼•è„šã€‚
- * - TIM1: é…ç½®M0ç”µæœºçš„ä¸‰ç›¸é«˜/ä½Žç«¯PWMè¾“å‡º(PA8-10, PB13-15)
- * - TIM2: é…ç½®è¾…åŠ©é©±åŠ¨å™¨çš„ä½Ž/é«˜ç«¯PWMè¾“å‡º(PB10-11)
- * - TIM8: é…ç½®M1ç”µæœºçš„ä¸‰ç›¸é«˜/ä½Žç«¯PWMè¾“å‡º(PC6-8, PA7, PB0-1)
+ * ¹¦ÄÜËµÃ÷£º
+ * ÔÚ¶¨Ê±Æ÷³õÊ¼»¯Íê³Éºóµ÷ÓÃ£¬ÓÃÓÚÅäÖÃ¸÷¶¨Ê±Æ÷µÄPWMÊä³öÒý½Å¡£
+ * - TIM1: ÅäÖÃM0µç»úµÄÈýÏà¸ß/µÍ¶ËPWMÊä³ö(PA8-10, PB13-15)
+ * - TIM2: ÅäÖÃ¸¨ÖúÇý¶¯Æ÷µÄµÍ/¸ß¶ËPWMÊä³ö(PB10-11)
+ * - TIM8: ÅäÖÃM1µç»úµÄÈýÏà¸ß/µÍ¶ËPWMÊä³ö(PC6-8, PA7, PB0-1)
  * 
- * @param timHandle: å®šæ—¶å™¨å¥æŸ„æŒ‡é’ˆ
+ * @param timHandle: ¶¨Ê±Æ÷¾ä±úÖ¸Õë
  */
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 {
@@ -542,13 +542,13 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
   /* USER CODE BEGIN TIM1_MspPostInit 0 */
 
   /* USER CODE END TIM1_MspPostInit 0 */
-    /**TIM1 GPIOé…ç½®    
-    PB13     ------> TIM1_CH1N (M0 Aç›¸ä½Žç«¯)
-    PB14     ------> TIM1_CH2N (M0 Bç›¸ä½Žç«¯)
-    PB15     ------> TIM1_CH3N (M0 Cç›¸ä½Žç«¯)
-    PA8     ------> TIM1_CH1  (M0 Aç›¸é«˜ç«¯)
-    PA9     ------> TIM1_CH2  (M0 Bç›¸é«˜ç«¯)
-    PA10     ------> TIM1_CH3 (M0 Cç›¸é«˜ç«¯)
+    /**TIM1 GPIOÅäÖÃ    
+    PB13     ------> TIM1_CH1N (M0 AÏàµÍ¶Ë)
+    PB14     ------> TIM1_CH2N (M0 BÏàµÍ¶Ë)
+    PB15     ------> TIM1_CH3N (M0 CÏàµÍ¶Ë)
+    PA8     ------> TIM1_CH1  (M0 AÏà¸ß¶Ë)
+    PA9     ------> TIM1_CH2  (M0 BÏà¸ß¶Ë)
+    PA10     ------> TIM1_CH3 (M0 CÏà¸ß¶Ë)
     */
     GPIO_InitStruct.Pin = M0_AL_Pin|M0_BL_Pin|M0_CL_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -574,9 +574,9 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE END TIM2_MspPostInit 0 */
   
-    /**TIM2 GPIOé…ç½®    
-    PB10     ------> TIM2_CH3 (è¾…åŠ©ä½Žç«¯)
-    PB11     ------> TIM2_CH4 (è¾…åŠ©é«˜ç«¯)
+    /**TIM2 GPIOÅäÖÃ    
+    PB10     ------> TIM2_CH3 (¸¨ÖúµÍ¶Ë)
+    PB11     ------> TIM2_CH4 (¸¨Öú¸ß¶Ë)
     */
     GPIO_InitStruct.Pin = AUX_L_Pin|AUX_H_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -595,13 +595,13 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE END TIM8_MspPostInit 0 */
   
-    /**TIM8 GPIOé…ç½®    
-    PA7     ------> TIM8_CH1N (M1 Aç›¸ä½Žç«¯)
-    PB0     ------> TIM8_CH2N (M1 Bç›¸ä½Žç«¯)
-    PB1     ------> TIM8_CH3N (M1 Cç›¸ä½Žç«¯)
-    PC6     ------> TIM8_CH1  (M1 Aç›¸é«˜ç«¯)
-    PC7     ------> TIM8_CH2  (M1 Bç›¸é«˜ç«¯)
-    PC8     ------> TIM8_CH3  (M1 Cç›¸é«˜ç«¯)
+    /**TIM8 GPIOÅäÖÃ    
+    PA7     ------> TIM8_CH1N (M1 AÏàµÍ¶Ë)
+    PB0     ------> TIM8_CH2N (M1 BÏàµÍ¶Ë)
+    PB1     ------> TIM8_CH3N (M1 CÏàµÍ¶Ë)
+    PC6     ------> TIM8_CH1  (M1 AÏà¸ß¶Ë)
+    PC7     ------> TIM8_CH2  (M1 BÏà¸ß¶Ë)
+    PC8     ------> TIM8_CH3  (M1 CÏà¸ß¶Ë)
     */
     GPIO_InitStruct.Pin = M1_AL_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -632,12 +632,12 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 }
 
 /**
- * @brief TIMåŸºç¡€å®šæ—¶å™¨åº•å±‚åŽ»åˆå§‹åŒ–å›žè°ƒå‡½æ•°
+ * @brief TIM»ù´¡¶¨Ê±Æ÷µ×²ãÈ¥³õÊ¼»¯»Øµ÷º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å½“è°ƒç”¨HAL_TIM_Base_DeInit()æ—¶ï¼ŒHALåº“ä¼šè‡ªåŠ¨è°ƒç”¨æ­¤å‡½æ•°æ¥é‡Šæ”¾TIM1çš„åº•å±‚ç¡¬ä»¶èµ„æºã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * µ±µ÷ÓÃHAL_TIM_Base_DeInit()Ê±£¬HAL¿â»á×Ô¶¯µ÷ÓÃ´Ëº¯ÊýÀ´ÊÍ·ÅTIM1µÄµ×²ãÓ²¼þ×ÊÔ´¡£
  * 
- * @param tim_baseHandle: å®šæ—¶å™¨å¥æŸ„æŒ‡é’ˆ
+ * @param tim_baseHandle: ¶¨Ê±Æ÷¾ä±úÖ¸Õë
  */
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 {
@@ -647,7 +647,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE BEGIN TIM1_MspDeInit 0 */
 
   /* USER CODE END TIM1_MspDeInit 0 */
-    /* ç¦ç”¨å¤–è®¾æ—¶é’Ÿ */
+    /* ½ûÓÃÍâÉèÊ±ÖÓ */
     __HAL_RCC_TIM1_CLK_DISABLE();
   /* USER CODE BEGIN TIM1_MspDeInit 1 */
 
@@ -656,14 +656,14 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 }
 
 /**
- * @brief TIM PWMåº•å±‚åŽ»åˆå§‹åŒ–å›žè°ƒå‡½æ•°
+ * @brief TIM PWMµ×²ãÈ¥³õÊ¼»¯»Øµ÷º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å½“è°ƒç”¨HAL_TIM_PWM_DeInit()æ—¶ï¼ŒHALåº“ä¼šè‡ªåŠ¨è°ƒç”¨æ­¤å‡½æ•°æ¥é‡Šæ”¾TIM2/TIM8çš„åº•å±‚ç¡¬ä»¶èµ„æºã€‚
- * - TIM2: ç¦ç”¨æ—¶é’Ÿ
- * - TIM8: ç¦ç”¨æ—¶é’Ÿå¹¶å…³é—­ä¸­æ–­
+ * ¹¦ÄÜËµÃ÷£º
+ * µ±µ÷ÓÃHAL_TIM_PWM_DeInit()Ê±£¬HAL¿â»á×Ô¶¯µ÷ÓÃ´Ëº¯ÊýÀ´ÊÍ·ÅTIM2/TIM8µÄµ×²ãÓ²¼þ×ÊÔ´¡£
+ * - TIM2: ½ûÓÃÊ±ÖÓ
+ * - TIM8: ½ûÓÃÊ±ÖÓ²¢¹Ø±ÕÖÐ¶Ï
  * 
- * @param tim_pwmHandle: å®šæ—¶å™¨å¥æŸ„æŒ‡é’ˆ
+ * @param tim_pwmHandle: ¶¨Ê±Æ÷¾ä±úÖ¸Õë
  */
 void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
 {
@@ -673,7 +673,7 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE BEGIN TIM2_MspDeInit 0 */
 
   /* USER CODE END TIM2_MspDeInit 0 */
-    /* ç¦ç”¨å¤–è®¾æ—¶é’Ÿ */
+    /* ½ûÓÃÍâÉèÊ±ÖÓ */
     __HAL_RCC_TIM2_CLK_DISABLE();
   /* USER CODE BEGIN TIM2_MspDeInit 1 */
 
@@ -684,10 +684,10 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE BEGIN TIM8_MspDeInit 0 */
 
   /* USER CODE END TIM8_MspDeInit 0 */
-    /* ç¦ç”¨å¤–è®¾æ—¶é’Ÿ */
+    /* ½ûÓÃÍâÉèÊ±ÖÓ */
     __HAL_RCC_TIM8_CLK_DISABLE();
 
-    /* å…³é—­TIM8ä¸­æ–­ */
+    /* ¹Ø±ÕTIM8ÖÐ¶Ï */
     HAL_NVIC_DisableIRQ(TIM8_TRG_COM_TIM14_IRQn);
   /* USER CODE BEGIN TIM8_MspDeInit 1 */
 
@@ -696,13 +696,13 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
 }
 
 /**
- * @brief TIMç¼–ç å™¨æ¨¡å¼åº•å±‚åŽ»åˆå§‹åŒ–å›žè°ƒå‡½æ•°
+ * @brief TIM±àÂëÆ÷Ä£Ê½µ×²ãÈ¥³õÊ¼»¯»Øµ÷º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å½“è°ƒç”¨HAL_TIM_Encoder_DeInit()æ—¶ï¼ŒHALåº“ä¼šè‡ªåŠ¨è°ƒç”¨æ­¤å‡½æ•°æ¥é‡Šæ”¾TIM3/TIM4çš„åº•å±‚ç¡¬ä»¶èµ„æºã€‚
- * åŒ…æ‹¬ç¦ç”¨æ—¶é’Ÿå’Œå¤ä½GPIOå¼•è„šé…ç½®ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * µ±µ÷ÓÃHAL_TIM_Encoder_DeInit()Ê±£¬HAL¿â»á×Ô¶¯µ÷ÓÃ´Ëº¯ÊýÀ´ÊÍ·ÅTIM3/TIM4µÄµ×²ãÓ²¼þ×ÊÔ´¡£
+ * °üÀ¨½ûÓÃÊ±ÖÓºÍ¸´Î»GPIOÒý½ÅÅäÖÃ¡£
  * 
- * @param tim_encoderHandle: å®šæ—¶å™¨å¥æŸ„æŒ‡é’ˆ
+ * @param tim_encoderHandle: ¶¨Ê±Æ÷¾ä±úÖ¸Õë
  */
 void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
 {
@@ -712,12 +712,12 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
   /* USER CODE BEGIN TIM3_MspDeInit 0 */
 
   /* USER CODE END TIM3_MspDeInit 0 */
-    /* ç¦ç”¨å¤–è®¾æ—¶é’Ÿ */
+    /* ½ûÓÃÍâÉèÊ±ÖÓ */
     __HAL_RCC_TIM3_CLK_DISABLE();
   
-    /**TIM3 GPIOé…ç½®    
-    PB4     ------> TIM3_CH1 (M0ç¼–ç å™¨Aç›¸)
-    PB5     ------> TIM3_CH2 (M0ç¼–ç å™¨Bç›¸)
+    /**TIM3 GPIOÅäÖÃ    
+    PB4     ------> TIM3_CH1 (M0±àÂëÆ÷AÏà)
+    PB5     ------> TIM3_CH2 (M0±àÂëÆ÷BÏà)
     */
     HAL_GPIO_DeInit(GPIOB, M0_ENC_A_Pin|M0_ENC_B_Pin);
 
@@ -730,12 +730,12 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
   /* USER CODE BEGIN TIM4_MspDeInit 0 */
 
   /* USER CODE END TIM4_MspDeInit 0 */
-    /* ç¦ç”¨å¤–è®¾æ—¶é’Ÿ */
+    /* ½ûÓÃÍâÉèÊ±ÖÓ */
     __HAL_RCC_TIM4_CLK_DISABLE();
   
-    /**TIM4 GPIOé…ç½®    
-    PB6     ------> TIM4_CH1 (M1ç¼–ç å™¨Aç›¸)
-    PB7     ------> TIM4_CH2 (M1ç¼–ç å™¨Bç›¸)
+    /**TIM4 GPIOÅäÖÃ    
+    PB6     ------> TIM4_CH1 (M1±àÂëÆ÷AÏà)
+    PB7     ------> TIM4_CH2 (M1±àÂëÆ÷BÏà)
     */
     HAL_GPIO_DeInit(GPIOB, M1_ENC_A_Pin|M1_ENC_B_Pin);
 

@@ -38,13 +38,12 @@
  * 版本: v0.3.6
  * ============================================================================
  */
-#include <cmsis_os.h>
-#include <commands.h>
-#include <usart.h>
-#include <gpio.h>
-#include <freertos_vars.h>
-#include <usbd_cdc.h>
-#include <utils.h>
+#include "commands.h"
+#include "usart.h"
+#include "gpio.h"
+#include "freertos_vars.h"
+#include "usbd_cdc.h"
+#include "utils.h"
 
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
@@ -262,7 +261,7 @@ monitoring_slot monitoring_slots[20] = {0};
 
 #if defined ARM_PRINTF
 
-#include <usart.h>
+#include "usart.h"
 #include <usbd_cdc_if.h>
 
 #include <string.h>
@@ -300,8 +299,8 @@ int commands_write(char* data, int len) {
             // 等待 USB 发送信号量，确保接口可用
             // 注意: USB 驱动会在发送完成时释放该信号量
             const uint32_t usb_tx_timeout = 100; // ms
-            osStatus sem_stat = osSemaphoreWait(sem_usb_tx, usb_tx_timeout);
-            if (sem_stat == osOK) {
+            BaseType_t sem_stat = xSemaphoreTake(sem_usb_tx, pdMS_TO_TICKS(usb_tx_timeout));
+            if (sem_stat == pdTRUE) {
                 uint8_t status = CDC_Transmit_FS((uint8_t*)data, len);  // 通过 CDC 端点发送
                 written = (status == USBD_OK) ? len : 0;
             } // 如果信号量超时，written 保持为 0
@@ -315,8 +314,8 @@ int commands_write(char* data, int len) {
             // 等待 UART DMA 发送信号量，确保接口可用
             // 注意: HAL_UART_TxCpltCallback 会在发送完成时释放该信号量
             const uint32_t uart_tx_timeout = 100; // ms
-            osStatus sem_stat = osSemaphoreWait(sem_uart_dma, uart_tx_timeout);
-            if (sem_stat == osOK) {
+            BaseType_t sem_stat = xSemaphoreTake(sem_uart_dma, pdMS_TO_TICKS(uart_tx_timeout));
+            if (sem_stat == pdTRUE) {
                 memcpy(uart_tx_buf, data, len);                    // 将数据拷贝到 UART 发送缓冲区
                 HAL_UART_Transmit_DMA(&huart4, uart_tx_buf, len);  // 启动 DMA 后台发送
             } // 如果信号量超时，written 保持为 0
@@ -1016,7 +1015,7 @@ void print_monitoring(int limit) {
  * 
  * 注意: 本线程永不退出，循环运行直到任务被删除
  */
-void cmd_parse_thread(void const * argument) {
+void cmd_parse_thread(void * argument) {
 
     /// UART 接收 DMA 循环缓冲区大小 (字节)
 #define UART_RX_BUFFER_SIZE 64
@@ -1070,8 +1069,8 @@ void cmd_parse_thread(void const * argument) {
                     // 等待 UART 发送信号量，确保接口可用
                     // 注意: HAL_UART_TxCpltCallback 会在发送完成时释放信号量
                     const uint32_t uart_tx_timeout = 100; // ms
-                    osStatus sem_stat = osSemaphoreWait(sem_uart_dma, uart_tx_timeout);
-                    if (sem_stat == osOK) {
+                    BaseType_t sem_stat = xSemaphoreTake(sem_uart_dma, pdMS_TO_TICKS(uart_tx_timeout));
+                    if (sem_stat == pdTRUE) {
                         HAL_UART_Transmit_DMA(&huart4, &c, 1);  // 启动 DMA 后台发送 (回显单个字符)
                     } // 如果信号量超时，则跳过此次回显
                 }
@@ -1117,9 +1116,8 @@ void cmd_parse_thread(void const * argument) {
             // 当执行到这里时，说明 UART 缓冲区中没有新数据需要处理了
             // 接下来检查是否有 USB 数据待处理: 等待最多 1ms
             // 如果有 USB 数据则处理，否则超时后返回继续检查 UART
-            const uint32_t usb_check_timeout = 1; // ms
-            osStatus sem_stat = osSemaphoreWait(sem_usb_rx, usb_check_timeout);
-            if (sem_stat == osOK) {
+            BaseType_t sem_stat = xSemaphoreTake(sem_usb_rx, pdMS_TO_TICKS(1));
+            if (sem_stat == pdTRUE) {
                 // USB 数据到达，打印接收日志
                 cmd_printf("In [%u] : \n", command_received_cnt++);
 #if defined ARM_TERMINAL
@@ -1135,7 +1133,7 @@ void cmd_parse_thread(void const * argument) {
         } while (!reset_read_state);
     }
     // 如果执行到这里，说明线程已结束 (理论上不会发生)
-    vTaskDelete(osThreadGetId());
+    vTaskDelete(NULL);
 }
 
 /**
@@ -1171,18 +1169,18 @@ void set_cmd_buffer(uint8_t *buf, uint32_t len) {
  *   - 通过信号量将中断处理延迟到线程上下文中，提高系统实时性
  *   - 中断处理完成后需要手动重新使能中断，否则会丢失后续中断
  */
-void usb_update_thread() {
+void usb_update_thread(void *argument) {
     for (;;) {
         // 等待 USB 中断信号 (OTG_FS_IRQHandler 释放)
-        osStatus semaphore_status = osSemaphoreWait(sem_usb_irq, osWaitForever);
-        if (semaphore_status == osOK) {
+        BaseType_t semaphore_status = xSemaphoreTake(sem_usb_irq, portMAX_DELAY);
+        if (semaphore_status == pdTRUE) {
             // 收到信号，处理新的 USB 传输事件
             HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
             // 重新使能 USB 中断，允许下一次中断触发
             HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
         }
     }
-    vTaskDelete(osThreadGetId());
+    vTaskDelete(NULL);
 }
 
 /**
@@ -1197,10 +1195,10 @@ void usb_update_thread() {
  *       FreeRTOS V8.1.0 及以上版本使用 pdMS_TO_TICKS
  *       低版本应使用 1 / portTICK_RATE_MS
  */
-void packet_timer_thread(void const * argument) {
+void packet_timer_thread(void * argument) {
     /* 定时器周期: 1ms。注: 使用 pdMS_TO_TICKS 将毫秒转换为系统 tick 数, FreeRTOS V8.1.0 及以上版本使用此宏,
        如果使用低版本, 请使用 1 / portTICK_RATE_MS */
-    const portTickType xDelay = pdMS_TO_TICKS(1);
+    const TickType_t xDelay = pdMS_TO_TICKS(1);
     
     // 定时器循环 - 永久运行
     for (;;) {
@@ -1208,6 +1206,6 @@ void packet_timer_thread(void const * argument) {
         vTaskDelay(xDelay);    // 延时 1ms
     }
     // 如果执行到这里，说明线程已结束 (理论上不会发生)
-    vTaskDelete(osThreadGetId());
+    vTaskDelete(NULL);
 }
 

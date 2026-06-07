@@ -1,22 +1,22 @@
 /*
  * ============================================================================
- * æ–‡ä»¶å: gpio.c
+ * ÎÄ¼þÃû: gpio.c
  *
- * æ–‡ä»¶ç”¨é€”:
- *   æœ¬æ–‡ä»¶å®žçŽ°STM32F4 GPIOå¼•è„šçš„é…ç½®é©±åŠ¨ï¼ŒåŒ…æ‹¬è¾“å…¥/è¾“å‡º/ä¸­æ–­å¼•è„šçš„åˆå§‹åŒ–ï¼Œ
- *   ä»¥åŠGPIOå¼•è„šåŠŸèƒ½çš„åŠ¨æ€åˆ‡æ¢ï¼ˆUARTæ¨¡å¼ä¸ŽStep/Diræ¨¡å¼ï¼‰ã€‚
+ * ÎÄ¼þÓÃÍ¾:
+ *   ±¾ÎÄ¼þÊµÏÖSTM32F4 GPIOÒý½ÅµÄÅäÖÃÇý¶¯£¬°üÀ¨ÊäÈë/Êä³ö/ÖÐ¶ÏÒý½ÅµÄ³õÊ¼»¯£¬
+ *   ÒÔ¼°GPIOÒý½Å¹¦ÄÜµÄ¶¯Ì¬ÇÐ»»£¨UARTÄ£Ê½ÓëStep/DirÄ£Ê½£©¡£
  *
- * ä¸»è¦åŠŸèƒ½æ¨¡å—ï¼š
- *   1. GPIOåˆå§‹åŒ–ï¼šè¾“å‡ºå¼•è„šï¼ˆSPIç‰‡é€‰ã€ç”µæµæ ¡å‡†ã€æ …æžä½¿èƒ½ï¼‰
- *   2. è¾“å…¥å¼•è„šé…ç½®ï¼ˆç¼–ç å™¨Zç›¸ã€æ•…éšœæ£€æµ‹ã€æ­¥è¿›è„‰å†²ï¼‰
- *   3. å¤–éƒ¨ä¸­æ–­é…ç½®ï¼ˆæ­¥è¿›ä¿¡å·ã€ç¼–ç å™¨ç´¢å¼•ï¼‰
- *   4. SetGPIO12toUART()ï¼šåŠ¨æ€åˆ‡æ¢GPIO_1/2ä¸ºUARTåŠŸèƒ½
- *   5. SetGPIO12toStepDir()ï¼šåŠ¨æ€åˆ‡æ¢GPIO_1/2ä¸ºæ­¥è¿›/æ–¹å‘åŠŸèƒ½
- *   6. SetupENCIndexGPIO()ï¼šé…ç½®ç¼–ç å™¨Zç›¸ä¸­æ–­
- *   7. HAL_GPIO_EXTI_Callback()ï¼šå¤–éƒ¨ä¸­æ–­å›žè°ƒåˆ†å‘
+ * Ö÷Òª¹¦ÄÜÄ£¿é£º
+ *   1. GPIO³õÊ¼»¯£ºÊä³öÒý½Å£¨SPIÆ¬Ñ¡¡¢µçÁ÷Ð£×¼¡¢Õ¤¼«Ê¹ÄÜ£©
+ *   2. ÊäÈëÒý½ÅÅäÖÃ£¨±àÂëÆ÷ZÏà¡¢¹ÊÕÏ¼ì²â¡¢²½½øÂö³å£©
+ *   3. Íâ²¿ÖÐ¶ÏÅäÖÃ£¨²½½øÐÅºÅ¡¢±àÂëÆ÷Ë÷Òý£©
+ *   4. SetGPIO12toUART()£º¶¯Ì¬ÇÐ»»GPIO_1/2ÎªUART¹¦ÄÜ
+ *   5. SetGPIO12toStepDir()£º¶¯Ì¬ÇÐ»»GPIO_1/2Îª²½½ø/·½Ïò¹¦ÄÜ
+ *   6. SetupENCIndexGPIO()£ºÅäÖÃ±àÂëÆ÷ZÏàÖÐ¶Ï
+ *   7. HAL_GPIO_EXTI_Callback()£ºÍâ²¿ÖÐ¶Ï»Øµ÷·Ö·¢
  *
- * ä½œè€…: ODrive Robotics
- * ç‰ˆæœ¬: v0.3.6
+ * ×÷Õß: ODrive Robotics
+ * °æ±¾: v0.3.6
  * ============================================================================
  */
 
@@ -32,98 +32,98 @@
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
-/* é…ç½®GPIO */
+/* ÅäÖÃGPIO */
 /*----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
 
 /** 
- * @brief GPIOåˆå§‹åŒ–å‡½æ•°
+ * @brief GPIO³õÊ¼»¯º¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * é…ç½®æ‰€æœ‰GPIOå¼•è„šçš„å·¥ä½œæ¨¡å¼ï¼ŒåŒ…æ‹¬è¾“å…¥ã€è¾“å‡ºã€æ¨¡æ‹Ÿã€ä¸­æ–­ç­‰ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ÅäÖÃËùÓÐGPIOÒý½ÅµÄ¹¤×÷Ä£Ê½£¬°üÀ¨ÊäÈë¡¢Êä³ö¡¢Ä£Äâ¡¢ÖÐ¶ÏµÈ¡£
  * 
- * ä¸»è¦é…ç½®å†…å®¹ï¼š
- * 1. ä½¿èƒ½æ‰€æœ‰GPIOç«¯å£æ—¶é’Ÿï¼ˆGPIOA/B/C/D/Hï¼‰
+ * Ö÷ÒªÅäÖÃÄÚÈÝ£º
+ * 1. Ê¹ÄÜËùÓÐGPIO¶Ë¿ÚÊ±ÖÓ£¨GPIOA/B/C/D/H£©
  * 
- * 2. è¾“å‡ºå¼•è„šé…ç½®ï¼š
- *    - M0_nCS, M1_nCS: SPIç‰‡é€‰ä¿¡å·ï¼Œåˆå§‹é«˜ç”µå¹³ï¼ˆæœªé€‰ä¸­ï¼‰
- *    - M1_DC_CAL, M0_DC_CAL: ç”µæµæ ¡å‡†æŽ§åˆ¶ï¼Œåˆå§‹ä½Žç”µå¹³
- *    - EN_GATE: æ …æžé©±åŠ¨å™¨ä½¿èƒ½ï¼Œåˆå§‹ä½Žç”µå¹³ï¼ˆç¦ç”¨ï¼‰
- *    - æ¨¡å¼ï¼šæŽ¨æŒ½è¾“å‡ºï¼Œæ— ä¸Šä¸‹æ‹‰ï¼Œä½Žé€Ÿ
+ * 2. Êä³öÒý½ÅÅäÖÃ£º
+ *    - M0_nCS, M1_nCS: SPIÆ¬Ñ¡ÐÅºÅ£¬³õÊ¼¸ßµçÆ½£¨Î´Ñ¡ÖÐ£©
+ *    - M1_DC_CAL, M0_DC_CAL: µçÁ÷Ð£×¼¿ØÖÆ£¬³õÊ¼µÍµçÆ½
+ *    - EN_GATE: Õ¤¼«Çý¶¯Æ÷Ê¹ÄÜ£¬³õÊ¼µÍµçÆ½£¨½ûÓÃ£©
+ *    - Ä£Ê½£ºÍÆÍìÊä³ö£¬ÎÞÉÏÏÂÀ­£¬µÍËÙ
  * 
- * 3. è¾“å…¥å¼•è„šé…ç½®ï¼š
- *    - GPIO_3: å¤–éƒ¨ä¸­æ–­ä¸Šå‡æ²¿è§¦å‘ï¼Œä¸‹æ‹‰ï¼ˆç”¨äºŽæ­¥è¿›è„‰å†²è¾“å…¥ï¼‰
- *    - GPIO_4, M0_ENC_Z: æµ®ç©ºè¾“å…¥ï¼ˆM0ç¼–ç å™¨Zç›¸ä¿¡å·ï¼‰
- *    - GPIO_5, M1_ENC_Z: æµ®ç©ºè¾“å…¥ï¼ˆM1ç¼–ç å™¨Zç›¸ä¿¡å·ï¼‰
- *    - nFAULT: æ•…éšœæ£€æµ‹å¼•è„šï¼Œä¸Šæ‹‰ï¼ˆä½Žç”µå¹³è¡¨ç¤ºæ•…éšœï¼‰
+ * 3. ÊäÈëÒý½ÅÅäÖÃ£º
+ *    - GPIO_3: Íâ²¿ÖÐ¶ÏÉÏÉýÑØ´¥·¢£¬ÏÂÀ­£¨ÓÃÓÚ²½½øÂö³åÊäÈë£©
+ *    - GPIO_4, M0_ENC_Z: ¸¡¿ÕÊäÈë£¨M0±àÂëÆ÷ZÏàÐÅºÅ£©
+ *    - GPIO_5, M1_ENC_Z: ¸¡¿ÕÊäÈë£¨M1±àÂëÆ÷ZÏàÐÅºÅ£©
+ *    - nFAULT: ¹ÊÕÏ¼ì²âÒý½Å£¬ÉÏÀ­£¨µÍµçÆ½±íÊ¾¹ÊÕÏ£©
  * 
- * 4. å¤–éƒ¨ä¸­æ–­é…ç½®ï¼š
- *    - EXTI2_IRQn: ä¼˜å…ˆçº§0ï¼ˆæœ€é«˜ï¼‰ï¼Œç”¨äºŽGPIO_3æ­¥è¿›ä¿¡å·
+ * 4. Íâ²¿ÖÐ¶ÏÅäÖÃ£º
+ *    - EXTI2_IRQn: ÓÅÏÈ¼¶0£¨×î¸ß£©£¬ÓÃÓÚGPIO_3²½½øÐÅºÅ
  * 
- * æ³¨æ„ï¼šGPIO_1å’ŒGPIO_2å¯é€šè¿‡SetGPIO12toUART()/SetGPIO12toStepDir()åŠ¨æ€åˆ‡æ¢åŠŸèƒ½
+ * ×¢Òâ£ºGPIO_1ºÍGPIO_2¿ÉÍ¨¹ýSetGPIO12toUART()/SetGPIO12toStepDir()¶¯Ì¬ÇÐ»»¹¦ÄÜ
  */
 void MX_GPIO_Init(void)
 {
 
   GPIO_InitTypeDef GPIO_InitStruct;
 
-  /* ä½¿èƒ½GPIOç«¯å£æ—¶é’Ÿ */
+  /* Ê¹ÄÜGPIO¶Ë¿ÚÊ±ÖÓ */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
-  /* é…ç½®GPIOè¾“å‡ºå¼•è„šåˆå§‹ç”µå¹³ */
+  /* ÅäÖÃGPIOÊä³öÒý½Å³õÊ¼µçÆ½ */
   HAL_GPIO_WritePin(GPIOC, M0_nCS_Pin|M1_nCS_Pin, GPIO_PIN_SET);
 
-  /* é…ç½®GPIOè¾“å‡ºå¼•è„šåˆå§‹ç”µå¹³ */
+  /* ÅäÖÃGPIOÊä³öÒý½Å³õÊ¼µçÆ½ */
   HAL_GPIO_WritePin(GPIOC, M1_DC_CAL_Pin|M0_DC_CAL_Pin, GPIO_PIN_RESET);
 
-  /* é…ç½®GPIOè¾“å‡ºå¼•è„šåˆå§‹ç”µå¹³ */
+  /* ÅäÖÃGPIOÊä³öÒý½Å³õÊ¼µçÆ½ */
   HAL_GPIO_WritePin(EN_GATE_GPIO_Port, EN_GATE_Pin, GPIO_PIN_RESET);
 
-  /* é…ç½®GPIOè¾“å‡ºå¼•è„š: PCPin PCPin PCPin PCPin */
+  /* ÅäÖÃGPIOÊä³öÒý½Å: PCPin PCPin PCPin PCPin */
   GPIO_InitStruct.Pin = M0_nCS_Pin|M1_nCS_Pin|M1_DC_CAL_Pin|M0_DC_CAL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /* é…ç½®GPIOå¼•è„š: PtPin */
+  /* ÅäÖÃGPIOÒý½Å: PtPin */
   GPIO_InitStruct.Pin = GPIO_3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIO_3_GPIO_Port, &GPIO_InitStruct);
 
-  /* é…ç½®GPIOå¼•è„š: PAPin PAPin */
+  /* ÅäÖÃGPIOÒý½Å: PAPin PAPin */
   GPIO_InitStruct.Pin = GPIO_4_Pin|M0_ENC_Z_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /* é…ç½®GPIOå¼•è„š: PBPin PBPin */
+  /* ÅäÖÃGPIOÒý½Å: PBPin PBPin */
   GPIO_InitStruct.Pin = GPIO_5_Pin|M1_ENC_Z_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /* é…ç½®GPIOå¼•è„š: PtPin */
+  /* ÅäÖÃGPIOÒý½Å: PtPin */
   GPIO_InitStruct.Pin = EN_GATE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(EN_GATE_GPIO_Port, &GPIO_InitStruct);
 
-  /* é…ç½®GPIOå¼•è„š: PtPin */
+  /* ÅäÖÃGPIOÒý½Å: PtPin */
   GPIO_InitStruct.Pin = nFAULT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(nFAULT_GPIO_Port, &GPIO_InitStruct);
 
-  /* å¤–éƒ¨ä¸­æ–­åˆå§‹åŒ– */
+  /* Íâ²¿ÖÐ¶Ï³õÊ¼»¯ */
   HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
@@ -133,19 +133,19 @@ void MX_GPIO_Init(void)
 #endif // End GPIO Include
 
 /**
- * @brief å°†GPIO_1å’ŒGPIO_2åˆ‡æ¢ä¸ºUARTåŠŸèƒ½
+ * @brief ½«GPIO_1ºÍGPIO_2ÇÐ»»ÎªUART¹¦ÄÜ
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å°†GPIO_1å’ŒGPIO_2é…ç½®ä¸ºUART4çš„TXå’ŒRXå¼•è„šï¼Œç”¨äºŽä¸²å£é€šä¿¡ã€‚
- * æ­¤å‡½æ•°é€šå¸¸åœ¨ç³»ç»Ÿè¿è¡Œæ—¶åŠ¨æ€åˆ‡æ¢GPIOåŠŸèƒ½æ—¶è°ƒç”¨ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ½«GPIO_1ºÍGPIO_2ÅäÖÃÎªUART4µÄTXºÍRXÒý½Å£¬ÓÃÓÚ´®¿ÚÍ¨ÐÅ¡£
+ * ´Ëº¯ÊýÍ¨³£ÔÚÏµÍ³ÔËÐÐÊ±¶¯Ì¬ÇÐ»»GPIO¹¦ÄÜÊ±µ÷ÓÃ¡£
  * 
- * é…ç½®å†…å®¹ï¼š
- * - GPIO_1: UART4_TX (å‘é€)ï¼Œå¤ç”¨æŽ¨æŒ½è¾“å‡ºï¼Œä¸‹æ‹‰
- * - GPIO_2: UART4_RX (æŽ¥æ”¶)ï¼Œå¤ç”¨æŽ¨æŒ½è¾“å‡ºï¼Œæ— ä¸Šä¸‹æ‹‰
- * - å¤ç”¨åŠŸèƒ½: GPIO_AF8_UART4
- * - é€Ÿåº¦: GPIO_SPEED_FREQ_VERY_HIGH
+ * ÅäÖÃÄÚÈÝ£º
+ * - GPIO_1: UART4_TX (·¢ËÍ)£¬¸´ÓÃÍÆÍìÊä³ö£¬ÏÂÀ­
+ * - GPIO_2: UART4_RX (½ÓÊÕ)£¬¸´ÓÃÍÆÍìÊä³ö£¬ÎÞÉÏÏÂÀ­
+ * - ¸´ÓÃ¹¦ÄÜ: GPIO_AF8_UART4
+ * - ËÙ¶È: GPIO_SPEED_FREQ_VERY_HIGH
  * 
- * æ³¨æ„ï¼šè°ƒç”¨æ­¤å‡½æ•°å‰ä¼šå…ˆç¦ç”¨EXTI0ä¸­æ–­ï¼Œä»¥é¿å…å¼•è„šæ¨¡å¼åˆ‡æ¢æ—¶çš„è¯¯è§¦å‘
+ * ×¢Òâ£ºµ÷ÓÃ´Ëº¯ÊýÇ°»áÏÈ½ûÓÃEXTI0ÖÐ¶Ï£¬ÒÔ±ÜÃâÒý½ÅÄ£Ê½ÇÐ»»Ê±µÄÎó´¥·¢
  */
 void SetGPIO12toUART() {
   GPIO_InitTypeDef GPIO_InitStruct;
@@ -168,17 +168,17 @@ void SetGPIO12toUART() {
 }
 
 /**
- * @brief å°†GPIO_1å’ŒGPIO_2åˆ‡æ¢ä¸ºæ­¥è¿›/æ–¹å‘æŽ§åˆ¶åŠŸèƒ½
+ * @brief ½«GPIO_1ºÍGPIO_2ÇÐ»»Îª²½½ø/·½Ïò¿ØÖÆ¹¦ÄÜ
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å°†GPIO_1å’ŒGPIO_2é…ç½®ä¸ºæ­¥è¿›ç”µæœºçš„STEPå’ŒDIRä¿¡å·è¾“å…¥ã€‚
- * - GPIO_1: STEPä¿¡å·ï¼Œå¤–éƒ¨ä¸­æ–­ä¸Šå‡æ²¿è§¦å‘ï¼Œä¸‹æ‹‰
- * - GPIO_2: DIRä¿¡å·ï¼Œæµ®ç©ºè¾“å…¥
+ * ¹¦ÄÜËµÃ÷£º
+ * ½«GPIO_1ºÍGPIO_2ÅäÖÃÎª²½½øµç»úµÄSTEPºÍDIRÐÅºÅÊäÈë¡£
+ * - GPIO_1: STEPÐÅºÅ£¬Íâ²¿ÖÐ¶ÏÉÏÉýÑØ´¥·¢£¬ÏÂÀ­
+ * - GPIO_2: DIRÐÅºÅ£¬¸¡¿ÕÊäÈë
  * 
- * ä¸­æ–­é…ç½®ï¼š
- * - EXTI0_IRQn: ä¼˜å…ˆçº§0ï¼ˆæœ€é«˜ï¼‰ï¼Œç”¨äºŽæ­¥è¿›è„‰å†²æ£€æµ‹
+ * ÖÐ¶ÏÅäÖÃ£º
+ * - EXTI0_IRQn: ÓÅÏÈ¼¶0£¨×î¸ß£©£¬ÓÃÓÚ²½½øÂö³å¼ì²â
  * 
- * æ³¨æ„ï¼šæ­¤å‡½æ•°ä¸ŽSetGPIO12toUART()é…åˆä½¿ç”¨ï¼Œå®žçŽ°å¼•è„šåŠŸèƒ½åŠ¨æ€åˆ‡æ¢
+ * ×¢Òâ£º´Ëº¯ÊýÓëSetGPIO12toUART()ÅäºÏÊ¹ÓÃ£¬ÊµÏÖÒý½Å¹¦ÄÜ¶¯Ì¬ÇÐ»»
  */
 void SetGPIO12toStepDir() {
   GPIO_InitTypeDef GPIO_InitStruct;
@@ -193,70 +193,70 @@ void SetGPIO12toStepDir() {
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIO_2_GPIO_Port, &GPIO_InitStruct);
 
-  // TODO: ç¡¬ç¼–ç çš„EXTIçº¿è·¯ä¸å¯ç§»æ¤ã€‚åº”é€šè¿‡CubeMXè®¾ç½®EXTIé»˜è®¤å€¼èŽ·å–æ˜ å°„
+  // TODO: Ó²±àÂëµÄEXTIÏßÂ·²»¿ÉÒÆÖ²¡£Ó¦Í¨¹ýCubeMXÉèÖÃEXTIÄ¬ÈÏÖµ»ñÈ¡Ó³Éä
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 }
 
 /**
- * @brief é…ç½®ç¼–ç å™¨ç´¢å¼•ä¿¡å·(Zç›¸)çš„å¤–éƒ¨ä¸­æ–­
+ * @brief ÅäÖÃ±àÂëÆ÷Ë÷ÒýÐÅºÅ(ZÏà)µÄÍâ²¿ÖÐ¶Ï
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * é…ç½®M0å’ŒM1ç”µæœºç¼–ç å™¨çš„Zç›¸ä¿¡å·ï¼ˆç´¢å¼•ä¿¡å·ï¼‰ä¸ºå¤–éƒ¨ä¸­æ–­è§¦å‘æ¨¡å¼ã€‚
- * ç¼–ç å™¨Zç›¸åœ¨ç”µæœºæ—‹è½¬ä¸€åœˆæ—¶è§¦å‘ä¸€æ¬¡ï¼Œç”¨äºŽç¡®å®šç”µæœºçš„ç»å¯¹ä½ç½®å‚è€ƒç‚¹ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ÅäÖÃM0ºÍM1µç»ú±àÂëÆ÷µÄZÏàÐÅºÅ£¨Ë÷ÒýÐÅºÅ£©ÎªÍâ²¿ÖÐ¶Ï´¥·¢Ä£Ê½¡£
+ * ±àÂëÆ÷ZÏàÔÚµç»úÐý×ªÒ»È¦Ê±´¥·¢Ò»´Î£¬ÓÃÓÚÈ·¶¨µç»úµÄ¾ø¶ÔÎ»ÖÃ²Î¿¼µã¡£
  * 
- * é…ç½®å†…å®¹ï¼š
- * - M0_ENC_Z: å¤–éƒ¨ä¸­æ–­ä¸Šå‡æ²¿è§¦å‘ï¼Œæ— ä¸Šä¸‹æ‹‰
- *   - ä¸­æ–­çº¿: EXTI15_10_IRQnï¼Œä¼˜å…ˆçº§0
- * - M1_ENC_Z: å¤–éƒ¨ä¸­æ–­ä¸Šå‡æ²¿è§¦å‘ï¼Œæ— ä¸Šä¸‹æ‹‰
- *   - ä¸­æ–­çº¿: EXTI3_IRQnï¼Œä¼˜å…ˆçº§0
+ * ÅäÖÃÄÚÈÝ£º
+ * - M0_ENC_Z: Íâ²¿ÖÐ¶ÏÉÏÉýÑØ´¥·¢£¬ÎÞÉÏÏÂÀ­
+ *   - ÖÐ¶ÏÏß: EXTI15_10_IRQn£¬ÓÅÏÈ¼¶0
+ * - M1_ENC_Z: Íâ²¿ÖÐ¶ÏÉÏÉýÑØ´¥·¢£¬ÎÞÉÏÏÂÀ­
+ *   - ÖÐ¶ÏÏß: EXTI3_IRQn£¬ÓÅÏÈ¼¶0
  * 
- * æ³¨æ„ï¼šä¸­æ–­ä¼˜å…ˆçº§è®¾ä¸º0ï¼ˆæœ€é«˜ï¼‰ï¼Œç¡®ä¿ç¼–ç å™¨ç´¢å¼•ä¿¡å·èƒ½è¢«åŠæ—¶å¤„ç†
+ * ×¢Òâ£ºÖÐ¶ÏÓÅÏÈ¼¶ÉèÎª0£¨×î¸ß£©£¬È·±£±àÂëÆ÷Ë÷ÒýÐÅºÅÄÜ±»¼°Ê±´¦Àí
  */
 void SetupENCIndexGPIO(){
   GPIO_InitTypeDef GPIO_InitStruct;
 
-  /* é…ç½®GPIOå¼•è„š: PAPin */
+  /* ÅäÖÃGPIOÒý½Å: PAPin */
   GPIO_InitStruct.Pin = M0_ENC_Z_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(M0_ENC_Z_GPIO_Port, &GPIO_InitStruct);
 
-  // TODO: ç¡¬ç¼–ç çš„EXTIçº¿è·¯ä¸å¯ç§»æ¤ã€‚åº”é€šè¿‡CubeMXè®¾ç½®EXTIé»˜è®¤å€¼èŽ·å–æ˜ å°„
+  // TODO: Ó²±àÂëµÄEXTIÏßÂ·²»¿ÉÒÆÖ²¡£Ó¦Í¨¹ýCubeMXÉèÖÃEXTIÄ¬ÈÏÖµ»ñÈ¡Ó³Éä
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-  /* é…ç½®GPIOå¼•è„š: PBPin */
+  /* ÅäÖÃGPIOÒý½Å: PBPin */
   GPIO_InitStruct.Pin = M1_ENC_Z_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(M1_ENC_Z_GPIO_Port, &GPIO_InitStruct);
 
-  // TODO: ç¡¬ç¼–ç çš„EXTIçº¿è·¯ä¸å¯ç§»æ¤ã€‚åº”é€šè¿‡CubeMXè®¾ç½®EXTIé»˜è®¤å€¼èŽ·å–æ˜ å°„
+  // TODO: Ó²±àÂëµÄEXTIÏßÂ·²»¿ÉÒÆÖ²¡£Ó¦Í¨¹ýCubeMXÉèÖÃEXTIÄ¬ÈÏÖµ»ñÈ¡Ó³Éä
   HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 }
 
 
 /**
- * @brief GPIOå¤–éƒ¨ä¸­æ–­å›žè°ƒå‡½æ•°ï¼ˆç”±HALåº“è‡ªåŠ¨è°ƒç”¨ï¼‰
+ * @brief GPIOÍâ²¿ÖÐ¶Ï»Øµ÷º¯Êý£¨ÓÉHAL¿â×Ô¶¯µ÷ÓÃ£©
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å½“GPIOå¼•è„šå¤–éƒ¨ä¸­æ–­è§¦å‘æ—¶ï¼ŒHALåº“ä¼šè°ƒç”¨æ­¤å›žè°ƒå‡½æ•°è¿›è¡Œä¸­æ–­åˆ†å‘å¤„ç†ã€‚
- * æ ¹æ®ä¸åŒçš„ä¸­æ–­å¼•è„šï¼Œè°ƒç”¨ç›¸åº”çš„å¤„ç†å‡½æ•°ï¼š
+ * ¹¦ÄÜËµÃ÷£º
+ * µ±GPIOÒý½ÅÍâ²¿ÖÐ¶Ï´¥·¢Ê±£¬HAL¿â»áµ÷ÓÃ´Ë»Øµ÷º¯Êý½øÐÐÖÐ¶Ï·Ö·¢´¦Àí¡£
+ * ¸ù¾Ý²»Í¬µÄÖÐ¶ÏÒý½Å£¬µ÷ÓÃÏàÓ¦µÄ´¦Àíº¯Êý£º
  * 
- * 1. GPIO_1æˆ–GPIO_3ä¸­æ–­ï¼šè°ƒç”¨step_cb()å¤„ç†æ­¥è¿›è„‰å†²ä¿¡å·
- *    - GPIO_1: M0ç”µæœºSTEPä¿¡å·
- *    - GPIO_3: M1ç”µæœºSTEPä¿¡å·
+ * 1. GPIO_1»òGPIO_3ÖÐ¶Ï£ºµ÷ÓÃstep_cb()´¦Àí²½½øÂö³åÐÅºÅ
+ *    - GPIO_1: M0µç»úSTEPÐÅºÅ
+ *    - GPIO_3: M1µç»úSTEPÐÅºÅ
  * 
- * 2. M0_ENC_Zä¸­æ–­ï¼šè°ƒç”¨enc_index_cb()å¤„ç†M0ç¼–ç å™¨ç´¢å¼•ä¿¡å·
+ * 2. M0_ENC_ZÖÐ¶Ï£ºµ÷ÓÃenc_index_cb()´¦ÀíM0±àÂëÆ÷Ë÷ÒýÐÅºÅ
  * 
- * 3. M1_ENC_Zä¸­æ–­ï¼šè°ƒç”¨enc_index_cb()å¤„ç†M1ç¼–ç å™¨ç´¢å¼•ä¿¡å·
+ * 3. M1_ENC_ZÖÐ¶Ï£ºµ÷ÓÃenc_index_cb()´¦ÀíM1±àÂëÆ÷Ë÷ÒýÐÅºÅ
  * 
- * @param GPIO_Pin: è§¦å‘ä¸­æ–­çš„GPIOå¼•è„šå·
+ * @param GPIO_Pin: ´¥·¢ÖÐ¶ÏµÄGPIOÒý½ÅºÅ
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  // æ­¥è¿›ä¿¡å·M0å’ŒM1
+  // ²½½øÐÅºÅM0ºÍM1
   if (GPIO_Pin & GPIO_1_Pin || GPIO_Pin & GPIO_3_Pin) {
     step_cb(GPIO_Pin);
   } else if(GPIO_Pin & M0_ENC_Z_Pin){

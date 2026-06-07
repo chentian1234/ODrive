@@ -1,24 +1,24 @@
 /*
  * ============================================================================
- * 文件名: version.h
+ * �ļ���: version.h
  *
- * 文件用途:
- *   本文件定义ODrive固件版本号、硬件版本标识和编译环境信息。
- *   版本号在系统启动时通过串口/USB输出，用于固件识别和版本管理。
- *   支持Keil MDK、IAR、GCC三种编译工具的自动识别。
+ * �ļ���;:
+ *   ���ļ�����ODrive�̼��汾�š�Ӳ���汾��ʶ�ͱ��뻷����Ϣ��
+ *   �汾����ϵͳ����ʱͨ������/USB��������ڹ̼�ʶ��Ͱ汾������
+ *   ֧��Keil MDK��IAR��GCC���ֱ��빤�ߵ��Զ�ʶ��
  *
- * 作者: ODrive Robotics
- * 版本: v0.3.6
+ * ����: ODrive Robotics
+ * �汾: v0.3.6
  * ============================================================================
  */
 
-#define ODRIVE_FW_VERSION_MAJOR   0    /* 主版本号：重大架构变更时增加 */
-#define ODRIVE_FW_VERSION_MINOR   3    /* 次版本号：新功能添加时增加 */
-#define ODRIVE_FW_VERSION_PATCH   6    /* 修订号：Bug修复时增加 */
+#define ODRIVE_FW_VERSION_MAJOR   0    /* ���汾�ţ��ش�ܹ����ʱ���� */
+#define ODRIVE_FW_VERSION_MINOR   3    /* �ΰ汾�ţ��¹�������ʱ���� */
+#define ODRIVE_FW_VERSION_PATCH   6    /* �޶��ţ�Bug�޸�ʱ���� */
 
-#define HW_NAME					"3.4b" /* 硬件版本号：对应ODrive V3.4b电路板 */
+#define HW_NAME					"3.4b" /* Ӳ���汾�ţ���ӦODrive V3.4b��·�� */
 
-/* 编译工具链自动识别 */
+/* ���빤�����Զ�ʶ�� */
 #if defined ARM_MDK
 #define __BUILD__					" MDK "   /* Keil MDK (ARM Compiler) */
 #elif defined ARM_IAR
@@ -30,25 +30,25 @@
 #define __BY__   " by "
 #define __AT__   " at "
 
-#define ARM_APP_NEW               /* 定义此宏表示当前编译的是应用程序固件 */
+#define ARM_APP_NEW               /* ����˺��ʾ��ǰ�������Ӧ�ó���̼� */
 
 #if 1
 #if defined ARM_APP_NEW
-#define __FOR__					"app2.0"  /* 应用程序版本2.0 */
+#define __FOR__					"app2.0"  /* Ӧ�ó���汾2.0 */
 #elif defined ARM_BOOT_NEW
-#define __FOR__					"boot1.0" /* Bootloader版本1.0 */
+#define __FOR__					"boot1.0" /* Bootloader�汾1.0 */
 #else
-#define __FOR__					"none1.0" /* 未定义版本 */
+#define __FOR__					"none1.0" /* δ����汾 */
 #endif
-#define FW_CHANGELOG_TIME      "23/05/2018 11:22:59"  /* 最后修改时间 */
+#define FW_CHANGELOG_TIME      "23/05/2018 11:22:59"  /* ����޸�ʱ�� */
 /*
-添加:
-修改:
-新增:
-删除:
-修复:
-优化:
-破坏:
+����:
+�޸�:
+����:
+ɾ��:
+�޸�:
+�Ż�:
+�ƻ�:
 */
 #elif 1
 #else

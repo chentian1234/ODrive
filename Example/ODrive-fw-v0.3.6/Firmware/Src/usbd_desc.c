@@ -1,25 +1,25 @@
 /*
  * ============================================================================
- * æ–‡ä»¶å: usbd_desc.c
+ * ÎÄ¼şÃû: usbd_desc.c
  *
- * æ–‡ä»¶ç”¨é€”:
- *   æœ¬æ–‡ä»¶å®šä¹‰USBè®¾å¤‡çš„æ‰€æœ‰æè¿°ç¬¦ï¼ŒåŒ…æ‹¬è®¾å¤‡æè¿°ç¬¦ã€é…ç½®æè¿°ç¬¦ã€å­—ç¬¦ä¸²æè¿°ç¬¦ç­‰ã€‚
- *   è¿™äº›æè¿°ç¬¦åœ¨USBæšä¸¾è¿‡ç¨‹ä¸­è¢«ä¸»æœºè¯»å–ï¼Œç”¨äºè¯†åˆ«è®¾å¤‡çš„ç±»å‹ã€å‚å•†å’ŒåŠŸèƒ½ã€‚
+ * ÎÄ¼şÓÃÍ¾:
+ *   ±¾ÎÄ¼ş¶¨ÒåUSBÉè±¸µÄËùÓĞÃèÊö·û£¬°üÀ¨Éè±¸ÃèÊö·û¡¢ÅäÖÃÃèÊö·û¡¢×Ö·û´®ÃèÊö·ûµÈ¡£
+ *   ÕâĞ©ÃèÊö·ûÔÚUSBÃ¶¾Ù¹ı³ÌÖĞ±»Ö÷»ú¶ÁÈ¡£¬ÓÃÓÚÊ¶±ğÉè±¸µÄÀàĞÍ¡¢³§ÉÌºÍ¹¦ÄÜ¡£
  *
- * ä¸»è¦åŠŸèƒ½æ¨¡å—ï¼š
- *   1. è®¾å¤‡æè¿°ç¬¦ï¼šVID/PIDã€USBç‰ˆæœ¬ã€è®¾å¤‡ç±»åˆ«ï¼ˆCDCç±»ï¼‰
- *   2. å­—ç¬¦ä¸²æè¿°ç¬¦ï¼šåˆ¶é€ å•†(ODrive)ã€äº§å“åç§°(ODrive v3.x)ã€åºåˆ—å·
- *   3. BOSæè¿°ç¬¦ï¼šLPMç”µæºç®¡ç†æ”¯æŒ
- *   4. æè¿°ç¬¦è·å–å‡½æ•°ï¼šæŒ‰ç±»å‹è¿”å›å¯¹åº”çš„æè¿°ç¬¦ç¼“å†²åŒº
+ * Ö÷Òª¹¦ÄÜÄ£¿é£º
+ *   1. Éè±¸ÃèÊö·û£ºVID/PID¡¢USB°æ±¾¡¢Éè±¸Àà±ğ£¨CDCÀà£©
+ *   2. ×Ö·û´®ÃèÊö·û£ºÖÆÔìÉÌ(ODrive)¡¢²úÆ·Ãû³Æ(ODrive v3.x)¡¢ĞòÁĞºÅ
+ *   3. BOSÃèÊö·û£ºLPMµçÔ´¹ÜÀíÖ§³Ö
+ *   4. ÃèÊö·û»ñÈ¡º¯Êı£º°´ÀàĞÍ·µ»Ø¶ÔÓ¦µÄÃèÊö·û»º³åÇø
  *
- * USBæè¿°ç¬¦å‚æ•°:
+ * USBÃèÊö·û²ÎÊı:
  *   - VID: 0x1209
  *   - PID: 0x0D31
- *   - åˆ¶é€ å•†: "ODrive"
- *   - äº§å“å: æ ¹æ®ç¡¬ä»¶ç‰ˆæœ¬åŠ¨æ€æ˜¾ç¤º (ODrive v3.1~v3.4)
+ *   - ÖÆÔìÉÌ: "ODrive"
+ *   - ²úÆ·Ãû: ¸ù¾İÓ²¼ş°æ±¾¶¯Ì¬ÏÔÊ¾ (ODrive v3.1~v3.4)
  *
- * ä½œè€…: ODrive Robotics
- * ç‰ˆæœ¬: v0.3.6
+ * ×÷Õß: ODrive Robotics
+ * °æ±¾: v0.3.6
  * ============================================================================
  */
 
@@ -203,10 +203,10 @@ __ALIGN_BEGIN uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ] __ALIGN_END;
   */ 
 
 /**
-* @brief  è¿”å›è®¾å¤‡æè¿°ç¬¦
-* @param  speed: å½“å‰è®¾å¤‡é€Ÿåº¦
-* @param  length: æŒ‡å‘æ•°æ®é•¿åº¦å˜é‡çš„æŒ‡é’ˆ
-* @retval æŒ‡å‘æè¿°ç¬¦ç¼“å†²åŒºçš„æŒ‡é’ˆ
+* @brief  ·µ»ØÉè±¸ÃèÊö·û
+* @param  speed: µ±Ç°Éè±¸ËÙ¶È
+* @param  length: Ö¸ÏòÊı¾İ³¤¶È±äÁ¿µÄÖ¸Õë
+* @retval Ö¸ÏòÃèÊö·û»º³åÇøµÄÖ¸Õë
 */
 uint8_t *  USBD_FS_DeviceDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -215,10 +215,10 @@ uint8_t *  USBD_FS_DeviceDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 }
 
 /**
-* @brief  è¿”å›è¯­è¨€IDå­—ç¬¦ä¸²æè¿°ç¬¦
-* @param  speed: å½“å‰è®¾å¤‡é€Ÿåº¦
-* @param  length: æŒ‡å‘æ•°æ®é•¿åº¦å˜é‡çš„æŒ‡é’ˆ
-* @retval æŒ‡å‘æè¿°ç¬¦ç¼“å†²åŒºçš„æŒ‡é’ˆ
+* @brief  ·µ»ØÓïÑÔID×Ö·û´®ÃèÊö·û
+* @param  speed: µ±Ç°Éè±¸ËÙ¶È
+* @param  length: Ö¸ÏòÊı¾İ³¤¶È±äÁ¿µÄÖ¸Õë
+* @retval Ö¸ÏòÃèÊö·û»º³åÇøµÄÖ¸Õë
 */
 uint8_t *  USBD_FS_LangIDStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -227,10 +227,10 @@ uint8_t *  USBD_FS_LangIDStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *leng
 }
 
 /**
-* @brief  è¿”å›äº§å“å­—ç¬¦ä¸²æè¿°ç¬¦
-* @param  speed: å½“å‰è®¾å¤‡é€Ÿåº¦
-* @param  length: æŒ‡å‘æ•°æ®é•¿åº¦å˜é‡çš„æŒ‡é’ˆ
-* @retval æŒ‡å‘æè¿°ç¬¦ç¼“å†²åŒºçš„æŒ‡é’ˆ
+* @brief  ·µ»Ø²úÆ·×Ö·û´®ÃèÊö·û
+* @param  speed: µ±Ç°Éè±¸ËÙ¶È
+* @param  length: Ö¸ÏòÊı¾İ³¤¶È±äÁ¿µÄÖ¸Õë
+* @retval Ö¸ÏòÃèÊö·û»º³åÇøµÄÖ¸Õë
 */
 uint8_t *  USBD_FS_ProductStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -246,10 +246,10 @@ uint8_t *  USBD_FS_ProductStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *len
 }
 
 /**
-* @brief  è¿”å›åˆ¶é€ å•†å­—ç¬¦ä¸²æè¿°ç¬¦
-* @param  speed: å½“å‰è®¾å¤‡é€Ÿåº¦
-* @param  length: æŒ‡å‘æ•°æ®é•¿åº¦å˜é‡çš„æŒ‡é’ˆ
-* @retval æŒ‡å‘æè¿°ç¬¦ç¼“å†²åŒºçš„æŒ‡é’ˆ
+* @brief  ·µ»ØÖÆÔìÉÌ×Ö·û´®ÃèÊö·û
+* @param  speed: µ±Ç°Éè±¸ËÙ¶È
+* @param  length: Ö¸ÏòÊı¾İ³¤¶È±äÁ¿µÄÖ¸Õë
+* @retval Ö¸ÏòÃèÊö·û»º³åÇøµÄÖ¸Õë
 */
 uint8_t *  USBD_FS_ManufacturerStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -258,10 +258,10 @@ uint8_t *  USBD_FS_ManufacturerStrDescriptor( USBD_SpeedTypeDef speed , uint16_t
 }
 
 /**
-* @brief  è¿”å›åºåˆ—å·å­—ç¬¦ä¸²æè¿°ç¬¦
-* @param  speed: å½“å‰è®¾å¤‡é€Ÿåº¦
-* @param  length: æŒ‡å‘æ•°æ®é•¿åº¦å˜é‡çš„æŒ‡é’ˆ
-* @retval æŒ‡å‘æè¿°ç¬¦ç¼“å†²åŒºçš„æŒ‡é’ˆ
+* @brief  ·µ»ØĞòÁĞºÅ×Ö·û´®ÃèÊö·û
+* @param  speed: µ±Ç°Éè±¸ËÙ¶È
+* @param  length: Ö¸ÏòÊı¾İ³¤¶È±äÁ¿µÄÖ¸Õë
+* @retval Ö¸ÏòÃèÊö·û»º³åÇøµÄÖ¸Õë
 */
 uint8_t *  USBD_FS_SerialStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -277,10 +277,10 @@ uint8_t *  USBD_FS_SerialStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *leng
 }
 
 /**
-* @brief  è¿”å›é…ç½®å­—ç¬¦ä¸²æè¿°ç¬¦
-* @param  speed: å½“å‰è®¾å¤‡é€Ÿåº¦
-* @param  length: æŒ‡å‘æ•°æ®é•¿åº¦å˜é‡çš„æŒ‡é’ˆ
-* @retval æŒ‡å‘æè¿°ç¬¦ç¼“å†²åŒºçš„æŒ‡é’ˆ
+* @brief  ·µ»ØÅäÖÃ×Ö·û´®ÃèÊö·û
+* @param  speed: µ±Ç°Éè±¸ËÙ¶È
+* @param  length: Ö¸ÏòÊı¾İ³¤¶È±äÁ¿µÄÖ¸Õë
+* @retval Ö¸ÏòÃèÊö·û»º³åÇøµÄÖ¸Õë
 */
 uint8_t *  USBD_FS_ConfigStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -296,10 +296,10 @@ uint8_t *  USBD_FS_ConfigStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *leng
 }
 
 /**
-* @brief  è¿”å›æ¥å£å­—ç¬¦ä¸²æè¿°ç¬¦
-* @param  speed: å½“å‰è®¾å¤‡é€Ÿåº¦
-* @param  length: æŒ‡å‘æ•°æ®é•¿åº¦å˜é‡çš„æŒ‡é’ˆ
-* @retval æŒ‡å‘æè¿°ç¬¦ç¼“å†²åŒºçš„æŒ‡é’ˆ
+* @brief  ·µ»Ø½Ó¿Ú×Ö·û´®ÃèÊö·û
+* @param  speed: µ±Ç°Éè±¸ËÙ¶È
+* @param  length: Ö¸ÏòÊı¾İ³¤¶È±äÁ¿µÄÖ¸Õë
+* @retval Ö¸ÏòÃèÊö·û»º³åÇøµÄÖ¸Õë
 */
 uint8_t *  USBD_FS_InterfaceStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -315,10 +315,10 @@ uint8_t *  USBD_FS_InterfaceStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *l
 }
 #if (USBD_LPM_ENABLED == 1)
 /**
-  * @brief  è¿”å›BOSæè¿°ç¬¦
-  * @param  speed: å½“å‰è®¾å¤‡é€Ÿåº¦
-  * @param  length: æŒ‡å‘æ•°æ®é•¿åº¦å˜é‡çš„æŒ‡é’ˆ
-  * @retval æŒ‡å‘æè¿°ç¬¦ç¼“å†²åŒºçš„æŒ‡é’ˆ
+  * @brief  ·µ»ØBOSÃèÊö·û
+  * @param  speed: µ±Ç°Éè±¸ËÙ¶È
+  * @param  length: Ö¸ÏòÊı¾İ³¤¶È±äÁ¿µÄÖ¸Õë
+  * @retval Ö¸ÏòÃèÊö·û»º³åÇøµÄÖ¸Õë
   */
 uint8_t *USBD_FS_USR_BOSDescriptor(USBD_SpeedTypeDef speed , uint16_t *length)
 {

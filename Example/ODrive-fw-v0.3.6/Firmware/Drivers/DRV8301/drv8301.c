@@ -40,7 +40,7 @@
 
 #include "assert.h"
 #include <math.h>
-#include "cmsis_os.h"
+#include "freertos_vars.h"  /* 包含 RTOS API 选择开关 (USE_CMSIS_OS) */
 
 // drivers
 #include "drv8301.h"
@@ -63,13 +63,13 @@ void DRV8301_enable(DRV8301_Handle handle) {
     HAL_GPIO_WritePin(handle->EngpioHandle, handle->EngpioNumber, GPIO_PIN_SET);
 
     //Wait for driver to come online
-    osDelay(10);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     // Make sure the Fault bit is not set during startup
     while ((DRV8301_readSpi(handle,DRV8301_RegName_Status_1) & DRV8301_STATUS1_FAULT_BITS) != 0);
 
     // Wait for the DRV8301 registers to update
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
 
     return;
 }
@@ -334,7 +334,7 @@ uint16_t DRV8301_readSpi(DRV8301_Handle handle, const DRV8301_RegName_e regName)
 
     // Actuate chipselect
     HAL_GPIO_WritePin(handle->nCSgpioHandle, handle->nCSgpioNumber, GPIO_PIN_RESET);
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
 
     // Do blocking read
     uint16_t zerobuff = 0;
@@ -346,17 +346,17 @@ uint16_t DRV8301_readSpi(DRV8301_Handle handle, const DRV8301_RegName_e regName)
     // but for some reason you actually need to pulse it.
     // Actuate chipselect
     HAL_GPIO_WritePin(handle->nCSgpioHandle, handle->nCSgpioNumber, GPIO_PIN_SET);
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
     // Actuate chipselect
     HAL_GPIO_WritePin(handle->nCSgpioHandle, handle->nCSgpioNumber, GPIO_PIN_RESET);
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
 
     HAL_SPI_TransmitReceive(handle->spiHandle, (uint8_t*)(&zerobuff), (uint8_t*)(&recbuff), 1, 1000);
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
 
     // Actuate chipselect
     HAL_GPIO_WritePin(handle->nCSgpioHandle, handle->nCSgpioNumber, GPIO_PIN_SET);
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
 
     assert(recbuff != 0xbeef);
 
@@ -549,16 +549,16 @@ void DRV8301_setShuntAmpGain(DRV8301_Handle handle,const DRV8301_ShuntAmpGain_e 
 void DRV8301_writeSpi(DRV8301_Handle handle, const DRV8301_RegName_e regName,const uint16_t data) {
     // Actuate chipselect
     HAL_GPIO_WritePin(handle->nCSgpioHandle, handle->nCSgpioNumber, GPIO_PIN_RESET);
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
 
     // Do blocking write
     uint16_t controlword = (uint16_t)DRV8301_buildCtrlWord(DRV8301_CtrlMode_Write, regName, data);
     HAL_SPI_Transmit(handle->spiHandle, (uint8_t*)(&controlword), 1, 1000);
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
 
     // Actuate chipselect
     HAL_GPIO_WritePin(handle->nCSgpioHandle, handle->nCSgpioNumber, GPIO_PIN_SET);
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
 
     return;
 }  // end of DRV8301_writeSpi() function
@@ -679,7 +679,7 @@ void DRV8301_setupSpi(DRV8301_Handle handle, DRV_SPI_8301_Vars_t *Spi_8301_Vars)
 
 
     // Wait for the DRV8301 registers to update
-    osDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(1));
 
 
     // Update Status Register 1

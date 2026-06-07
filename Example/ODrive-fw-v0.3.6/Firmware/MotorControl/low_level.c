@@ -23,7 +23,7 @@
  *     将(d-q)坐标系下的电压指令转换为PWM占空比，控制三相MOSFET桥臂。
  */
 
-// Because of broken cmsis_os.h, we need to include arm_math first,
+// Because of legacy FreeRTOS header usage, we need to include arm_math first,
 // otherwise chip specific defines are ommited
 #include <stm32f405xx.h>
 #include <stm32f4xx_hal.h>  // Sets up the correct chip specifc defines required by arm_math
@@ -34,7 +34,7 @@
 
 #include <low_level.h>
 
-#include <cmsis_os.h>
+#include "utils.h"
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -530,7 +530,7 @@ float phase_current_from_adcval(Motor_t *motor, uint32_t ADCValue) {
  *   5. 等待电流采样DC_CAL滤波收敛（约1.5秒）
  * 
  * 初始化流程时序：
- *   DRV8301_setup() → start_adc_pwm() → HAL_TIM_Encoder_Start() → osDelay(1500ms)
+ *   DRV8301_setup() -> start_adc_pwm() -> HAL_TIM_Encoder_Start() -> vTaskDelay(pdMS_TO_TICKS(1500))
  * 
  * 注意：初始化完成后，PWM输出仍处于禁用状态(MOE=0)，
  *       需要在校准完成后手动使能。
@@ -554,7 +554,7 @@ void init_motor_control() {
 
     // Wait for current sense calibration to converge
     // TODO make timing a function of calibration filter tau
-    osDelay(1500);
+    vTaskDelay(pdMS_TO_TICKS(1500));
 }
 
 /**
@@ -660,7 +660,7 @@ void start_adc_pwm() {
     __HAL_ADC_ENABLE(&hadc2);
     __HAL_ADC_ENABLE(&hadc3);
     // Warp field stabilize.
-    osDelay(2);
+    vTaskDelay(pdMS_TO_TICKS(2));
     __HAL_ADC_ENABLE_IT(&hadc1, ADC_IT_JEOC);
     __HAL_ADC_ENABLE_IT(&hadc2, ADC_IT_JEOC);
     __HAL_ADC_ENABLE_IT(&hadc3, ADC_IT_JEOC);
@@ -1056,7 +1056,7 @@ void pwm_trig_adc_cb(ADC_HandleTypeDef *hadc, bool injected) {
             motor->current_meas.phC = current - motor->DC_calib.phC;
         }
         // Trigger motor thread
-        if (motor->thread_ready) osSignalSet(motor->motor_thread, M_SIGNAL_PH_CURRENT_MEAS);
+        if (motor->thread_ready) xTaskNotifyGive(motor->motor_thread);
     } else {
         // DC_CAL measurement
         if (hadc == &hadc2) {
@@ -1119,8 +1119,7 @@ bool measure_phase_resistance(Motor_t *motor, float test_current, float max_volt
     static const int num_test_cycles = 3.0f / CURRENT_MEAS_PERIOD; // Test runs for 3s
     float test_voltage = 0.0f;
     for (int i = 0; i < num_test_cycles; ++i) {
-        osEvent evt = osSignalWait(M_SIGNAL_PH_CURRENT_MEAS, PH_CURRENT_MEAS_TIMEOUT);
-        if (evt.status != osEventSignal) {
+        if (xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(PH_CURRENT_MEAS_TIMEOUT)) != pdTRUE) {
             motor->error = ERROR_PHASE_RESISTANCE_MEASUREMENT_TIMEOUT;
             return false;
         }
@@ -1204,7 +1203,7 @@ bool measure_phase_inductance(Motor_t *motor, float voltage_low, float voltage_h
 
     for (int t = 0; t < num_cycles; ++t) {
         for (int i = 0; i < 2; ++i) {
-            if (osSignalWait(M_SIGNAL_PH_CURRENT_MEAS, PH_CURRENT_MEAS_TIMEOUT).status != osEventSignal) {
+            if (xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(PH_CURRENT_MEAS_TIMEOUT)) != pdTRUE) {
                 motor->error = ERROR_PHASE_INDUCTANCE_MEASUREMENT_TIMEOUT;
                 return false;
             }
@@ -1319,7 +1318,7 @@ bool calib_enc_offset(Motor_t *motor, float voltage_magnitude) {
 
     // go to motor zero phase for start_lock_duration to get ready to scan
     for (int i = 0; i < start_lock_duration * current_meas_hz; ++i) {
-        if (osSignalWait(M_SIGNAL_PH_CURRENT_MEAS, PH_CURRENT_MEAS_TIMEOUT).status != osEventSignal) {
+        if (xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(PH_CURRENT_MEAS_TIMEOUT)) != pdTRUE) {
             motor->error = ERROR_ENCODER_MEASUREMENT_TIMEOUT;
             return false;
         }
@@ -1333,7 +1332,7 @@ bool calib_enc_offset(Motor_t *motor, float voltage_magnitude) {
     // scan forwards
     for (float ph = -scan_range / 2.0f; ph < scan_range / 2.0f; ph += step_size) {
         for (int i = 0; i < dt_step * (float)current_meas_hz; ++i) {
-            if (osSignalWait(M_SIGNAL_PH_CURRENT_MEAS, PH_CURRENT_MEAS_TIMEOUT).status != osEventSignal) {
+            if (xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(PH_CURRENT_MEAS_TIMEOUT)) != pdTRUE) {
                 motor->error = ERROR_ENCODER_MEASUREMENT_TIMEOUT;
                 return false;
             }
@@ -1368,7 +1367,7 @@ bool calib_enc_offset(Motor_t *motor, float voltage_magnitude) {
     // scan backwards
     for (float ph = scan_range / 2.0f; ph > -scan_range / 2.0f; ph -= step_size) {
         for (int i = 0; i < dt_step * (float)current_meas_hz; ++i) {
-            if (osSignalWait(M_SIGNAL_PH_CURRENT_MEAS, PH_CURRENT_MEAS_TIMEOUT).status != osEventSignal) {
+            if (xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(PH_CURRENT_MEAS_TIMEOUT)) != pdTRUE) {
                 motor->error = ERROR_ENCODER_MEASUREMENT_TIMEOUT;
                 return false;
             }
@@ -1560,7 +1559,7 @@ bool anti_cogging_calibration(Motor_t *motor) {
 bool scan_for_enc_idx(Motor_t *motor, float omega, float voltage_magnitude) {
     for (;;) {
         for (float ph = 0.0f; ph < 2.0f * M_PI; ph += omega * current_meas_period) {
-            osSignalWait(M_SIGNAL_PH_CURRENT_MEAS, osWaitForever);
+            xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
             if (!do_checks(motor)) return false;
 
             if (motor->encoder.index_found) return true;
@@ -1877,7 +1876,7 @@ void setEncoderCount(Motor_t *motor, uint32_t count) {
 
 bool spin_up_timestep(Motor_t *motor, float phase, float I_mag) {
     // wait for new timestep
-    if (osSignalWait(M_SIGNAL_PH_CURRENT_MEAS, PH_CURRENT_MEAS_TIMEOUT).status != osEventSignal) {
+    if (xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(PH_CURRENT_MEAS_TIMEOUT)) != pdTRUE) {
         motor->error = ERROR_SPIN_UP_TIMEOUT;
         return false;
     }
@@ -2346,7 +2345,7 @@ bool loop_updates(Motor_t *motor) {
 void control_motor_loop(Motor_t *motor) {
 //    while (*(motor->axis_legacy.enable_control)) {
     while (motor->enable_control) {
-        if (osSignalWait(M_SIGNAL_PH_CURRENT_MEAS, PH_CURRENT_MEAS_TIMEOUT).status != osEventSignal) {
+        if (xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(PH_CURRENT_MEAS_TIMEOUT)) != pdTRUE) {
             motor->error = ERROR_FOC_MEASUREMENT_TIMEOUT;
             break;
         }
@@ -2566,7 +2565,7 @@ void control_motor_loop(Motor_t *motor) {
  *   - 调用queue_modulation_timings()
  *   - 归一化系数(2/3)来自SVM的Clarke变换系数
  */
-void motor_thread(void const *argument) {
+void motor_thread(void *argument) {
     Motor_t *motor = (Motor_t *)argument;
 
     // Allocate the map for anti-cogging algorithm and initialize all values to 0.0f
@@ -2578,7 +2577,7 @@ void motor_thread(void const *argument) {
         }
     }
 
-    motor->motor_thread = osThreadGetId();
+    motor->motor_thread = xTaskGetCurrentTaskHandle();
     motor->thread_ready = true;
 
     for (;;) {
@@ -2607,7 +2606,7 @@ void motor_thread(void const *argument) {
         }
 
         queue_voltage_timings(motor, 0.0f, 0.0f);
-        osDelay(100);
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
     motor->thread_ready = false;
 }

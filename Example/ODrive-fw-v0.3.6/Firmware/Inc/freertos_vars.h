@@ -1,32 +1,44 @@
 /*
  * ============================================================================
- * æ–‡ä»¶å: freertos_vars.h
+ * ÎÄ¼şÃû: freertos_vars.h
  *
- * æ–‡ä»¶ç”¨é€”:
- *   æœ¬æ–‡ä»¶å£°æ˜æ‰€æœ‰FreeRTOSä»»åŠ¡å’Œä¿¡å·é‡çš„å¤–éƒ¨å˜é‡ï¼Œä¾›å…¶ä»–æ¨¡å—å¼•ç”¨ã€‚
- *   åŒ…å«ï¼š
- *     - 4ä¸ªä¿¡å·é‡ï¼šUSBæ¥æ”¶/å‘é€ã€UART DMAã€USBä¸­æ–­
- *     - 4ä¸ªä»»åŠ¡å¥æŸ„ï¼šç”µæœº0/1ã€å‘½ä»¤è§£æã€USBå¤„ç†
+ * ÎÄ¼şÓÃÍ¾:
+ *   ±¾ÎÄ¼şÉùÃ÷ËùÓĞFreeRTOSÈÎÎñºÍĞÅºÅÁ¿µÄÍâ²¿±äÁ¿£¬¹©ÆäËûÄ£¿éÒıÓÃ¡£
+ *   °üº¬£º
+ *     - 4¸öĞÅºÅÁ¿£ºUSB½ÓÊÕ/·¢ËÍ¡¢UART DMA¡¢USBÖĞ¶Ï
+ *     - 4¸öÈÎÎñ¾ä±ú£ºµç»ú0/1¡¢ÃüÁî½âÎö¡¢USB´¦Àí
  *
- * ä½œè€…: ODrive Robotics
- * ç‰ˆæœ¬: v0.3.6
+ * ×÷Õß: ODrive Robotics
+ * °æ±¾: v0.3.6
  * ============================================================================
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __FREERTOS_H
-#define __FREERTOS_H
+#ifndef __FREERTOS_VARS_H
+#define __FREERTOS_VARS_H
 
-/* ä¿¡å·é‡å£°æ˜ - ç”¨äºä»»åŠ¡å’Œä¸­æ–­ä¹‹é—´çš„åŒæ­¥æ§åˆ¶ */
-extern osSemaphoreId sem_usb_irq;    /* USBä¸­æ–­ä¿¡å·é‡ï¼šç”±USB ISRé‡Šæ”¾ï¼Œusb_update_threadç­‰å¾… */
-extern osSemaphoreId sem_uart_dma;   /* UART DMAä¿¡å·é‡ï¼šæ§åˆ¶UART DMAä¼ è¾“çš„äº’æ–¥è®¿é—® */
-extern osSemaphoreId sem_usb_rx;     /* USBæ¥æ”¶ä¿¡å·é‡ï¼šæ ‡è®°USB CDCæ•°æ®å·²æ¥æ”¶ */
-extern osSemaphoreId sem_usb_tx;     /* USBå‘é€ä¿¡å·é‡ï¼šæ§åˆ¶USB CDCæ•°æ®å‘é€çš„äº’æ–¥è®¿é—® */
+/* ========================================================================== */
+/*                        FreeRTOS Ô­Éú API                                     */
+/* ========================================================================== */
 
-/* ä»»åŠ¡å¥æŸ„å£°æ˜ - ç”¨äºå¤–éƒ¨æ¨¡å—è®¿é—®ä»»åŠ¡çŠ¶æ€ */
-extern osThreadId thread_motor_0;    /* ç”µæœº0æ§åˆ¶çº¿ç¨‹å¥æŸ„ï¼ˆæœ€é«˜ä¼˜å…ˆçº§ osPriorityHigh+1ï¼‰ */
-extern osThreadId thread_motor_1;    /* ç”µæœº1æ§åˆ¶çº¿ç¨‹å¥æŸ„ï¼ˆé«˜ä¼˜å…ˆçº§ osPriorityHighï¼‰ */
-extern osThreadId thread_cmd_parse;  /* å‘½ä»¤è§£æçº¿ç¨‹å¥æŸ„ï¼ˆæ™®é€šä¼˜å…ˆçº§ osPriorityNormalï¼‰ */
-extern osThreadId thread_usb_pump;   /* USBå¤„ç†çº¿ç¨‹å¥æŸ„ï¼ˆæ™®é€šä¼˜å…ˆçº§ osPriorityNormalï¼‰ */
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 
-#endif /* __FREERTOS_H */
+/* ========================================================================== */
+/*                         Íâ²¿±äÁ¿ÉùÃ÷                                         */
+/* ========================================================================== */
+
+/* ĞÅºÅÁ¿ÉùÃ÷ - ÓÃÓÚÈÎÎñºÍÖĞ¶ÏÖ®¼äµÄÍ¬²½¿ØÖÆ */
+extern SemaphoreHandle_t sem_usb_irq;    /* USBÖĞ¶ÏĞÅºÅÁ¿£ºÓÉUSB ISRÊÍ·Å£¬usb_update_threadµÈ´ı */
+extern SemaphoreHandle_t sem_uart_dma;   /* UART DMAĞÅºÅÁ¿£º¿ØÖÆUART DMA´«ÊäµÄ»¥³â·ÃÎÊ */
+extern SemaphoreHandle_t sem_usb_rx;     /* USB½ÓÊÕĞÅºÅÁ¿£º±ê¼ÇUSB CDCÊı¾İÒÑ½ÓÊÕ */
+extern SemaphoreHandle_t sem_usb_tx;     /* USB·¢ËÍĞÅºÅÁ¿£º¿ØÖÆUSB CDCÊı¾İ·¢ËÍµÄ»¥³â·ÃÎÊ */
+
+/* ÈÎÎñ¾ä±úÉùÃ÷ - ÓÃÓÚÍâ²¿Ä£¿é·ÃÎÊÈÎÎñ×´Ì¬ */
+extern TaskHandle_t thread_motor_0;      /* µç»ú0¿ØÖÆÏß³Ì¾ä±ú */
+extern TaskHandle_t thread_motor_1;      /* µç»ú1¿ØÖÆÏß³Ì¾ä±ú */
+extern TaskHandle_t thread_cmd_parse;    /* ÃüÁî½âÎöÏß³Ì¾ä±ú */
+extern TaskHandle_t thread_usb_pump;     /* USB´¦ÀíÏß³Ì¾ä±ú */
+
+#endif /* __FREERTOS_VARS_H */

@@ -21,7 +21,8 @@ extern "C" {
 #endif
 
     /* Includes ------------------------------------------------------------------*/
-#include <cmsis_os.h>
+#include "FreeRTOS.h"
+#include "task.h"
 #include "drv8301.h"
 
 /**
@@ -260,7 +261,7 @@ extern "C" {
         float dc_bus_brownout_trip_level;               /**< 直流母线欠压保护触发电平，单位伏特[V] */
         float phase_inductance;                         /**< 电机相电感，单位亨[H]，电机参数，用于电流环控制 */
         float phase_resistance;                         /**< 电机相电阻，单位欧姆[Ω]，电机参数，用于电流环控制 */
-        osThreadId motor_thread;                        /**< 电机控制线程ID，FreeRTOS线程句柄 */
+        TaskHandle_t motor_thread;                        /**< 电机控制线程ID，FreeRTOS线程句柄 */
         bool thread_ready;                              /**< 线程就绪标志，true表示电机控制线程已初始化完成 */
         bool enable_control;                            /**< 控制使能标志，通过USB等接口设置的电机控制开关。
                                                          *   发生错误时会自动清零，需要calibration_ok=true才能启用 */
@@ -852,7 +853,7 @@ extern "C" {
       * 
       * @param[in] argument  线程参数，通常为电机实例指针（Motor_t*）
       */
-    void motor_thread(void const * argument);
+    void motor_thread(void * argument);
 
 #ifdef __cplusplus
 }

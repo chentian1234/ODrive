@@ -1,28 +1,27 @@
 /*
  * ============================================================================
- * æ–‡ä»¶å: syscalls.c
+ * ÎÄ¼şÃû: syscalls.c
  *
- * æ–‡ä»¶ç”¨é€”:
- *   æœ¬æ–‡ä»¶é‡å®šå‘æ ‡å‡†Cåº“çš„ç³»ç»Ÿè°ƒç”¨ï¼ˆ_writeï¼‰ï¼Œå®ç°printfåŠŸèƒ½é€šè¿‡UARTæˆ–USBè¾“å‡ºã€‚
- *   è¿™æ˜¯åµŒå…¥å¼ç³»ç»Ÿä¸­å®ç°è°ƒè¯•è¾“å‡ºçš„æ ‡å‡†æ–¹æ³•ã€‚
+ * ÎÄ¼şÓÃÍ¾:
+ *   ±¾ÎÄ¼şÖØ¶¨Ïò±ê×¼C¿âµÄÏµÍ³µ÷ÓÃ£¨_write£©£¬ÊµÏÖprintf¹¦ÄÜÍ¨¹ıUART»òUSBÊä³ö¡£
+ *   ÕâÊÇÇ¶ÈëÊ½ÏµÍ³ÖĞÊµÏÖµ÷ÊÔÊä³öµÄ±ê×¼·½·¨¡£
  *
- * ä¸»è¦åŠŸèƒ½æ¨¡å—ï¼š
- *   1. _write()ï¼šé‡å®šå‘æ ‡å‡†è¾“å‡ºï¼Œæ”¯æŒUSB CDCå’ŒUART DMAä¸¤ç§é€šé“
- *   2. HAL_UART_TxCpltCallback()ï¼šUART DMAå‘é€å®Œæˆå›è°ƒï¼Œé‡Šæ”¾ä¿¡å·é‡
+ * Ö÷Òª¹¦ÄÜÄ£¿é£º
+ *   1. _write()£ºÖØ¶¨Ïò±ê×¼Êä³ö£¬Ö§³ÖUSB CDCºÍUART DMAÁ½ÖÖÍ¨µÀ
+ *   2. HAL_UART_TxCpltCallback()£ºUART DMA·¢ËÍÍê³É»Øµ÷£¬ÊÍ·ÅĞÅºÅÁ¿
  *
- * å‘é€é€šé“é€‰æ‹©:
- *   - USB CDC: é€šè¿‡CDC_Transmit_FSå‘é€ï¼Œç­‰å¾…sem_usb_txä¿¡å·é‡
- *   - UART DMA: é€šè¿‡HAL_UART_Transmit_DMAåå°å‘é€ï¼Œç­‰å¾…sem_uart_dmaä¿¡å·é‡
- *   - ç¼“å†²åŒºå¤§å°: 64å­—èŠ‚
+ * ·¢ËÍÍ¨µÀÑ¡Ôñ:
+ *   - USB CDC: Í¨¹ıCDC_Transmit_FS·¢ËÍ£¬µÈ´ısem_usb_txĞÅºÅÁ¿
+ *   - UART DMA: Í¨¹ıHAL_UART_Transmit_DMAºóÌ¨·¢ËÍ£¬µÈ´ısem_uart_dmaĞÅºÅÁ¿
+ *   - »º³åÇø´óĞ¡: 64×Ö½Ú
  *
- * ä½œè€…: ODrive Robotics
- * ç‰ˆæœ¬: v0.3.6
+ * ×÷Õß: ODrive Robotics
+ * °æ±¾: v0.3.6
  * ============================================================================
  */
 
-#include <cmsis_os.h>
 #include <commands.h>
-#include <freertos_vars.h>
+#include <freertos_vars.h>  /* °üº¬ RTOS API Ñ¡Ôñ¿ª¹Ø (USE_CMSIS_OS) */
 //#include <sys/unistd.h>
 #include <usart.h>
 #include <usbd_cdc_if.h>
@@ -37,57 +36,55 @@
 static uint8_t uart_tx_buf[UART_TX_BUFFER_SIZE];
 
 /**
- * @brief é‡å®šå‘_writeç³»ç»Ÿè°ƒç”¨ï¼Œå®ç°printfåŠŸèƒ½
+ * @brief ÖØ¶¨Ïò_writeÏµÍ³µ÷ÓÃ£¬ÊµÏÖprintf¹¦ÄÜ
  * 
- * åŠŸèƒ½è¯´æ˜ï¼š
- * é‡å†™æ ‡å‡†åº“çš„_writeå‡½æ•°ï¼Œä½¿printf()ç­‰æ ‡å‡†è¾“å‡ºå‡½æ•°å¯ä»¥é€šè¿‡UARTæˆ–USBå‘é€æ•°æ®ã€‚
- * è¿™æ˜¯åµŒå…¥å¼ç³»ç»Ÿä¸­å®ç°printfåŠŸèƒ½çš„å¸¸è§æ–¹æ³•ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * ÖØĞ´±ê×¼¿âµÄ_writeº¯Êı£¬Ê¹printf()µÈ±ê×¼Êä³öº¯Êı¿ÉÒÔÍ¨¹ıUART»òUSB·¢ËÍÊı¾İ¡£
+ * ÕâÊÇÇ¶ÈëÊ½ÏµÍ³ÖĞÊµÏÖprintf¹¦ÄÜµÄ³£¼û·½·¨¡£
  * 
- * å‘é€é€šé“é€‰æ‹©ï¼š
- * é€šè¿‡serial_printf_selectå˜é‡é€‰æ‹©å‘é€é€šé“ï¼š
- * 1. SERIAL_PRINTF_IS_USB: é€šè¿‡USB CDCå‘é€
- *    - ç­‰å¾…sem_usb_txä¿¡å·é‡ï¼ˆ100msè¶…æ—¶ï¼‰
- *    - ä½¿ç”¨CDC_Transmit_FS()å‘é€æ•°æ®
+ * ·¢ËÍÍ¨µÀÑ¡Ôñ£º
+ * Í¨¹ıserial_printf_select±äÁ¿Ñ¡Ôñ·¢ËÍÍ¨µÀ£º
+ * 1. SERIAL_PRINTF_IS_USB: Í¨¹ıUSB CDC·¢ËÍ
+ *    - µÈ´ısem_usb_txĞÅºÅÁ¿£¨100ms³¬Ê±£©
+ *    - Ê¹ÓÃCDC_Transmit_FS()·¢ËÍÊı¾İ
  * 
- * 2. SERIAL_PRINTF_IS_UART: é€šè¿‡UART DMAå‘é€
- *    - æ£€æŸ¥æ•°æ®é•¿åº¦ä¸è¶…è¿‡ç¼“å†²åŒºå¤§å°(64å­—èŠ‚)
- *    - ç­‰å¾…sem_uart_dmaä¿¡å·é‡ï¼ˆ100msè¶…æ—¶ï¼‰
- *    - ä½¿ç”¨HAL_UART_Transmit_DMA()åå°DMAå‘é€
+ * 2. SERIAL_PRINTF_IS_UART: Í¨¹ıUART DMA·¢ËÍ
+ *    - ¼ì²éÊı¾İ³¤¶È²»³¬¹ı»º³åÇø´óĞ¡(64×Ö½Ú)
+ *    - µÈ´ısem_uart_dmaĞÅºÅÁ¿£¨100ms³¬Ê±£©
+ *    - Ê¹ÓÃHAL_UART_Transmit_DMA()ºóÌ¨DMA·¢ËÍ
  * 
- * ä¿¡å·é‡æœºåˆ¶ï¼š
- * ä½¿ç”¨ä¿¡å·é‡ä¿è¯åŒä¸€æ—¶é—´åªæœ‰ä¸€ä¸ªä»»åŠ¡ä½¿ç”¨å‘é€é€šé“ï¼Œ
- * é¿å…æ•°æ®å†²çªå’Œè¦†ç›–ã€‚
+ * ĞÅºÅÁ¿»úÖÆ£º
+ * Ê¹ÓÃĞÅºÅÁ¿±£Ö¤Í¬Ò»Ê±¼äÖ»ÓĞÒ»¸öÈÎÎñÊ¹ÓÃ·¢ËÍÍ¨µÀ£¬
+ * ±ÜÃâÊı¾İ³åÍ»ºÍ¸²¸Ç¡£
  * 
- * @param file: æ–‡ä»¶æè¿°ç¬¦ï¼ˆæ ‡å‡†è¾“å‡ºé€šå¸¸ä¸º1ï¼‰
- * @param data: è¦å‘é€çš„æ•°æ®æŒ‡é’ˆ
- * @param len: æ•°æ®é•¿åº¦
- * @return å®é™…å‘é€çš„å­—èŠ‚æ•°ï¼Œå‘é€å¤±è´¥è¿”å›0
+ * @param file: ÎÄ¼şÃèÊö·û£¨±ê×¼Êä³öÍ¨³£Îª1£©
+ * @param data: Òª·¢ËÍµÄÊı¾İÖ¸Õë
+ * @param len: Êı¾İ³¤¶È
+ * @return Êµ¼Ê·¢ËÍµÄ×Ö½ÚÊı£¬·¢ËÍÊ§°Ü·µ»Ø0
  */
 int _write(int file, char* data, int len) {
-    // å·²å†™å…¥çš„å­—èŠ‚æ•°
+    // ÒÑĞ´ÈëµÄ×Ö½ÚÊı
     int written = 0;
     switch (serial_printf_select) {
         case SERIAL_PRINTF_IS_USB: {
-            // ç­‰å¾…USBæ¥å£å¯ç”¨ä¿¡å·é‡
+            // µÈ´ıUSB½Ó¿Ú¿ÉÓÃĞÅºÅÁ¿
             const uint32_t usb_tx_timeout = 100; // ms
-            osStatus sem_stat = osSemaphoreWait(sem_usb_tx, usb_tx_timeout);
-            if (sem_stat == osOK) {
-                uint8_t status = CDC_Transmit_FS((uint8_t*)data, len);  // é€šè¿‡USB CDCå‘é€
+            if (xSemaphoreTake(sem_usb_tx, pdMS_TO_TICKS(usb_tx_timeout)) == pdTRUE) {
+                uint8_t status = CDC_Transmit_FS((uint8_t*)data, len);  // Í¨¹ıUSB CDC·¢ËÍ
                 written = (status == USBD_OK) ? len : 0;
-            } // å¦‚æœä¿¡å·é‡è¶…æ—¶ï¼Œwrittenä¿æŒä¸º0
+            } // Èç¹ûĞÅºÅÁ¿³¬Ê±£¬written±£³ÖÎª0
         } break;
 
         case SERIAL_PRINTF_IS_UART: {
-            // æ£€æŸ¥æ•°æ®é•¿åº¦æ˜¯å¦è¶…è¿‡ç¼“å†²åŒº
+            // ¼ì²éÊı¾İ³¤¶ÈÊÇ·ñ³¬¹ı»º³åÇø
             if (len > UART_TX_BUFFER_SIZE)
                 return 0;
-            // ç­‰å¾…UART DMAæ¥å£å¯ç”¨ä¿¡å·é‡
+            // µÈ´ıUART DMA½Ó¿Ú¿ÉÓÃĞÅºÅÁ¿
             const uint32_t uart_tx_timeout = 100; // ms
-            osStatus sem_stat = osSemaphoreWait(sem_uart_dma, uart_tx_timeout);
-            if (sem_stat == osOK) {
-                memcpy(uart_tx_buf, data, len);                    // å¤åˆ¶æ•°æ®åˆ°å‘é€ç¼“å†²åŒº
-                HAL_UART_Transmit_DMA(&huart4, uart_tx_buf, len);  // å¯åŠ¨DMAåå°ä¼ è¾“
-            } // å¦‚æœä¿¡å·é‡è¶…æ—¶ï¼Œwrittenä¿æŒä¸º0
+            if (xSemaphoreTake(sem_uart_dma, pdMS_TO_TICKS(uart_tx_timeout)) == pdTRUE) {
+                memcpy(uart_tx_buf, data, len);                    // ¸´ÖÆÊı¾İµ½·¢ËÍ»º³åÇø
+                HAL_UART_Transmit_DMA(&huart4, uart_tx_buf, len);  // Æô¶¯DMAºóÌ¨´«Êä
+            } // Èç¹ûĞÅºÅÁ¿³¬Ê±£¬written±£³ÖÎª0
         } break;
 
         default: {
@@ -99,5 +96,5 @@ int _write(int file, char* data, int len) {
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
-    osSemaphoreRelease(sem_uart_dma);
+    xSemaphoreGive(sem_uart_dma);
 }

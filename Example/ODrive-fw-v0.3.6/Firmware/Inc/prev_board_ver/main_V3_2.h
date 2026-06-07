@@ -1,151 +1,151 @@
 /*
  * ============================================================================
- * æ–‡ä»¶å: main_V3_2.h
+ * ÎÄ¼þÃû: main_V3_2.h
  *
- * æ–‡ä»¶ç”¨é€”:
- *   æœ¬æ–‡ä»¶å®šä¹‰ODrive V3.2ç‰ˆæœ¬ç¡¬ä»¶çš„æ‰€æœ‰GPIOå¼•è„šå®å®šä¹‰å’Œå®šæ—¶å™¨å‚æ•°ã€‚
- *   åŒ…å«ï¼š
- *     - å®šæ—¶å™¨æ—¶é’Ÿé¢‘çŽ‡å’Œå‘¨æœŸé…ç½®ï¼ˆTIM1/8: 168MHz, TIM_APB1: 84MHzï¼‰
- *     - æ­»åŒºæ—¶é—´é…ç½®ï¼ˆTIM1/8: 20æ—¶é’Ÿå‘¨æœŸ, TIM_APB1: 40æ—¶é’Ÿå‘¨æœŸï¼‰
- *     - æ‰€æœ‰GPIOå¼•è„šå®šä¹‰ï¼ˆM0/M1ä¸‰ç›¸PWMã€ç”µæµé‡‡æ ·ã€ç¼–ç å™¨ã€SPIç‰‡é€‰ç­‰ï¼‰
- *     - å¤–éƒ¨ä¸­æ–­å¼•è„šå®šä¹‰ï¼ˆGPIO_1/2/3çš„EXTIä¸­æ–­ï¼‰
+ * ÎÄ¼þÓÃÍ¾:
+ *   ±¾ÎÄ¼þ¶¨ÒåODrive V3.2°æ±¾Ó²¼þµÄËùÓÐGPIOÒý½Åºê¶¨ÒåºÍ¶¨Ê±Æ÷²ÎÊý¡£
+ *   °üº¬£º
+ *     - ¶¨Ê±Æ÷Ê±ÖÓÆµÂÊºÍÖÜÆÚÅäÖÃ£¨TIM1/8: 168MHz, TIM_APB1: 84MHz£©
+ *     - ËÀÇøÊ±¼äÅäÖÃ£¨TIM1/8: 20Ê±ÖÓÖÜÆÚ, TIM_APB1: 40Ê±ÖÓÖÜÆÚ£©
+ *     - ËùÓÐGPIOÒý½Å¶¨Òå£¨M0/M1ÈýÏàPWM¡¢µçÁ÷²ÉÑù¡¢±àÂëÆ÷¡¢SPIÆ¬Ñ¡µÈ£©
+ *     - Íâ²¿ÖÐ¶ÏÒý½Å¶¨Òå£¨GPIO_1/2/3µÄEXTIÖÐ¶Ï£©
  *
- * æ³¨æ„ï¼šæ­¤æ–‡ä»¶é€‚ç”¨äºŽV3.2ç‰ˆæœ¬ç¡¬ä»¶ï¼Œæ–°ç‰ˆæœ¬ç¡¬ä»¶è¯·ä½¿ç”¨main.h
+ * ×¢Òâ£º´ËÎÄ¼þÊÊÓÃÓÚV3.2°æ±¾Ó²¼þ£¬ÐÂ°æ±¾Ó²¼þÇëÊ¹ÓÃmain.h
  *
- * ä½œè€…: ODrive Robotics
- * ç‰ˆæœ¬: v0.3.6
+ * ×÷Õß: ODrive Robotics
+ * °æ±¾: v0.3.6
  * ============================================================================
  */
 
 /* Private define ------------------------------------------------------------*/
 /* ============================================================================
- * å®šæ—¶å™¨å‚æ•°é…ç½®
+ * ¶¨Ê±Æ÷²ÎÊýÅäÖÃ
  * ============================================================================ */
-#define TIM_1_8_CLOCK_HZ 168000000        /* TIM1/TIM8æ—¶é’Ÿé¢‘çŽ‡: 168MHz (APB2) */
-#define TIM_1_8_PERIOD_CLOCKS 10192       /* TIM1/TIM8å‘¨æœŸ: 10192 â†’ PWMé¢‘çŽ‡ â‰ˆ 16.48kHz */
-#define TIM_1_8_DEADTIME_CLOCKS 20        /* TIM1/TIM8æ­»åŒºæ—¶é—´: 20æ—¶é’Ÿå‘¨æœŸ â‰ˆ 119ns */
-#define TIM_APB1_CLOCK_HZ 84000000        /* TIM2/TIM3/TIM4/TIM5æ—¶é’Ÿé¢‘çŽ‡: 84MHz (APB1) */
-#define TIM_APB1_PERIOD_CLOCKS 4096       /* TIM2å‘¨æœŸ: 4096 â†’ PWMé¢‘çŽ‡ â‰ˆ 20.5kHz */
-#define TIM_APB1_DEADTIME_CLOCKS 40       /* TIM2æ­»åŒºæ—¶é—´: 40æ—¶é’Ÿå‘¨æœŸ â‰ˆ 476ns */
+#define TIM_1_8_CLOCK_HZ 168000000        /* TIM1/TIM8Ê±ÖÓÆµÂÊ: 168MHz (APB2) */
+#define TIM_1_8_PERIOD_CLOCKS 10192       /* TIM1/TIM8ÖÜÆÚ: 10192 ¡ú PWMÆµÂÊ ¡Ö 16.48kHz */
+#define TIM_1_8_DEADTIME_CLOCKS 20        /* TIM1/TIM8ËÀÇøÊ±¼ä: 20Ê±ÖÓÖÜÆÚ ¡Ö 119ns */
+#define TIM_APB1_CLOCK_HZ 84000000        /* TIM2/TIM3/TIM4/TIM5Ê±ÖÓÆµÂÊ: 84MHz (APB1) */
+#define TIM_APB1_PERIOD_CLOCKS 4096       /* TIM2ÖÜÆÚ: 4096 ¡ú PWMÆµÂÊ ¡Ö 20.5kHz */
+#define TIM_APB1_DEADTIME_CLOCKS 40       /* TIM2ËÀÇøÊ±¼ä: 40Ê±ÖÓÖÜÆÚ ¡Ö 476ns */
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - SPIç‰‡é€‰å’Œç”µæµæ ¡å‡†
+ * GPIOÒý½Å¶¨Òå - SPIÆ¬Ñ¡ºÍµçÁ÷Ð£×¼
  * ============================================================================ */
-#define M0_nCS_Pin GPIO_PIN_13            /* M0 DRV8301 SPIç‰‡é€‰ */
+#define M0_nCS_Pin GPIO_PIN_13            /* M0 DRV8301 SPIÆ¬Ñ¡ */
 #define M0_nCS_GPIO_Port GPIOC
-#define M1_nCS_Pin GPIO_PIN_14            /* M1 DRV8301 SPIç‰‡é€‰ */
+#define M1_nCS_Pin GPIO_PIN_14            /* M1 DRV8301 SPIÆ¬Ñ¡ */
 #define M1_nCS_GPIO_Port GPIOC
-#define M1_DC_CAL_Pin GPIO_PIN_15         /* M1ç”µæµé‡‡æ ·ç›´æµæ ¡å‡†ADCè¾“å…¥ */
+#define M1_DC_CAL_Pin GPIO_PIN_15         /* M1µçÁ÷²ÉÑùÖ±Á÷Ð£×¼ADCÊäÈë */
 #define M1_DC_CAL_GPIO_Port GPIOC
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - ç”µæµé‡‡æ · (ADCè¾“å…¥)
+ * GPIOÒý½Å¶¨Òå - µçÁ÷²ÉÑù (ADCÊäÈë)
  * ============================================================================ */
-#define M0_IB_Pin GPIO_PIN_0              /* M0 Bç›¸ç”µæµé‡‡æ · */
+#define M0_IB_Pin GPIO_PIN_0              /* M0 BÏàµçÁ÷²ÉÑù */
 #define M0_IB_GPIO_Port GPIOC
-#define M0_IC_Pin GPIO_PIN_1              /* M0 Cç›¸ç”µæµé‡‡æ · */
+#define M0_IC_Pin GPIO_PIN_1              /* M0 CÏàµçÁ÷²ÉÑù */
 #define M0_IC_GPIO_Port GPIOC
-#define M1_IC_Pin GPIO_PIN_2              /* M1 Cç›¸ç”µæµé‡‡æ · */
+#define M1_IC_Pin GPIO_PIN_2              /* M1 CÏàµçÁ÷²ÉÑù */
 #define M1_IC_GPIO_Port GPIOC
-#define M1_IB_Pin GPIO_PIN_3              /* M1 Bç›¸ç”µæµé‡‡æ · */
+#define M1_IB_Pin GPIO_PIN_3              /* M1 BÏàµçÁ÷²ÉÑù */
 #define M1_IB_GPIO_Port GPIOC
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - æ¨¡æ‹Ÿè¾“å…¥ (ADC)
+ * GPIOÒý½Å¶¨Òå - Ä£ÄâÊäÈë (ADC)
  * ============================================================================ */
-#define VBUS_S_Pin GPIO_PIN_0             /* æ¯çº¿ç”µåŽ‹é‡‡æ · */
+#define VBUS_S_Pin GPIO_PIN_0             /* Ä¸ÏßµçÑ¹²ÉÑù */
 #define VBUS_S_GPIO_Port GPIOA
-#define M1_TEMP_Pin GPIO_PIN_1            /* M1æ¸©åº¦é‡‡æ · */
+#define M1_TEMP_Pin GPIO_PIN_1            /* M1ÎÂ¶È²ÉÑù */
 #define M1_TEMP_GPIO_Port GPIOA
-#define AUX_I_Pin GPIO_PIN_2              /* è¾…åŠ©ç”µæµé‡‡æ · */
+#define AUX_I_Pin GPIO_PIN_2              /* ¸¨ÖúµçÁ÷²ÉÑù */
 #define AUX_I_GPIO_Port GPIOA
-#define GPIO_4_Pin GPIO_PIN_3             /* é€šç”¨GPIO4 (UART/Step-Dirå¤ç”¨) */
+#define GPIO_4_Pin GPIO_PIN_3             /* Í¨ÓÃGPIO4 (UART/Step-Dir¸´ÓÃ) */
 #define GPIO_4_GPIO_Port GPIOA
-#define GPIO_3_Pin GPIO_PIN_4             /* é€šç”¨GPIO3 (UART/Step-Dirå¤ç”¨) */
+#define GPIO_3_Pin GPIO_PIN_4             /* Í¨ÓÃGPIO3 (UART/Step-Dir¸´ÓÃ) */
 #define GPIO_3_GPIO_Port GPIOA
-#define GPIO_3_EXTI_IRQn EXTI4_IRQn       /* GPIO3å¤–éƒ¨ä¸­æ–­ */
-#define GPIO_2_Pin GPIO_PIN_5             /* é€šç”¨GPIO2 (UART/Step-Dirå¤ç”¨) */
+#define GPIO_3_EXTI_IRQn EXTI4_IRQn       /* GPIO3Íâ²¿ÖÐ¶Ï */
+#define GPIO_2_Pin GPIO_PIN_5             /* Í¨ÓÃGPIO2 (UART/Step-Dir¸´ÓÃ) */
 #define GPIO_2_GPIO_Port GPIOA
-#define AUX_V_Pin GPIO_PIN_6              /* è¾…åŠ©ç”µåŽ‹é‡‡æ · */
+#define AUX_V_Pin GPIO_PIN_6              /* ¸¨ÖúµçÑ¹²ÉÑù */
 #define AUX_V_GPIO_Port GPIOA
-#define M1_AL_Pin GPIO_PIN_7              /* M1 Aç›¸ä½Žè¾¹ç”µæµé‡‡æ · */
+#define M1_AL_Pin GPIO_PIN_7              /* M1 AÏàµÍ±ßµçÁ÷²ÉÑù */
 #define M1_AL_GPIO_Port GPIOA
-#define AUX_TEMP_Pin GPIO_PIN_4           /* è¾…åŠ©æ¸©åº¦é‡‡æ · */
+#define AUX_TEMP_Pin GPIO_PIN_4           /* ¸¨ÖúÎÂ¶È²ÉÑù */
 #define AUX_TEMP_GPIO_Port GPIOC
-#define M0_TEMP_Pin GPIO_PIN_5            /* M0æ¸©åº¦é‡‡æ · */
+#define M0_TEMP_Pin GPIO_PIN_5            /* M0ÎÂ¶È²ÉÑù */
 #define M0_TEMP_GPIO_Port GPIOC
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - M1ä¸‰ç›¸ä½Žè¾¹PWM
+ * GPIOÒý½Å¶¨Òå - M1ÈýÏàµÍ±ßPWM
  * ============================================================================ */
-#define M1_BL_Pin GPIO_PIN_0              /* M1 Bç›¸ä½Žè¾¹ */
+#define M1_BL_Pin GPIO_PIN_0              /* M1 BÏàµÍ±ß */
 #define M1_BL_GPIO_Port GPIOB
-#define M1_CL_Pin GPIO_PIN_1              /* M1 Cç›¸ä½Žè¾¹ */
+#define M1_CL_Pin GPIO_PIN_1              /* M1 CÏàµÍ±ß */
 #define M1_CL_GPIO_Port GPIOB
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - é€šç”¨GPIO (å¸¦å¤–éƒ¨ä¸­æ–­)
+ * GPIOÒý½Å¶¨Òå - Í¨ÓÃGPIO (´øÍâ²¿ÖÐ¶Ï)
  * ============================================================================ */
-#define GPIO_1_Pin GPIO_PIN_2             /* é€šç”¨GPIO1 (UART/Step-Dirå¤ç”¨) */
+#define GPIO_1_Pin GPIO_PIN_2             /* Í¨ÓÃGPIO1 (UART/Step-Dir¸´ÓÃ) */
 #define GPIO_1_GPIO_Port GPIOB
-#define GPIO_1_EXTI_IRQn EXTI2_IRQn       /* GPIO1å¤–éƒ¨ä¸­æ–­ */
+#define GPIO_1_EXTI_IRQn EXTI2_IRQn       /* GPIO1Íâ²¿ÖÐ¶Ï */
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - è¾…åŠ©ç«¯å£PWMè¾“å‡º
+ * GPIOÒý½Å¶¨Òå - ¸¨Öú¶Ë¿ÚPWMÊä³ö
  * ============================================================================ */
-#define AUX_L_Pin GPIO_PIN_10             /* è¾…åŠ©ç«¯å£ä½Žè¾¹ */
+#define AUX_L_Pin GPIO_PIN_10             /* ¸¨Öú¶Ë¿ÚµÍ±ß */
 #define AUX_L_GPIO_Port GPIOB
-#define AUX_H_Pin GPIO_PIN_11             /* è¾…åŠ©ç«¯å£é«˜è¾¹ */
+#define AUX_H_Pin GPIO_PIN_11             /* ¸¨Öú¶Ë¿Ú¸ß±ß */
 #define AUX_H_GPIO_Port GPIOB
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - DRV8301æŽ§åˆ¶å’ŒM0ä¸‰ç›¸ä½Žè¾¹PWM
+ * GPIOÒý½Å¶¨Òå - DRV8301¿ØÖÆºÍM0ÈýÏàµÍ±ßPWM
  * ============================================================================ */
-#define EN_GATE_Pin GPIO_PIN_12           /* DRV8301æ …æžé©±åŠ¨ä½¿èƒ½ */
+#define EN_GATE_Pin GPIO_PIN_12           /* DRV8301Õ¤¼«Çý¶¯Ê¹ÄÜ */
 #define EN_GATE_GPIO_Port GPIOB
-#define M0_AL_Pin GPIO_PIN_13             /* M0 Aç›¸ä½Žè¾¹ */
+#define M0_AL_Pin GPIO_PIN_13             /* M0 AÏàµÍ±ß */
 #define M0_AL_GPIO_Port GPIOB
-#define M0_BL_Pin GPIO_PIN_14             /* M0 Bç›¸ä½Žè¾¹ */
+#define M0_BL_Pin GPIO_PIN_14             /* M0 BÏàµÍ±ß */
 #define M0_BL_GPIO_Port GPIOB
-#define M0_CL_Pin GPIO_PIN_15             /* M0 Cç›¸ä½Žè¾¹ */
+#define M0_CL_Pin GPIO_PIN_15             /* M0 CÏàµÍ±ß */
 #define M0_CL_GPIO_Port GPIOB
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - M1ä¸‰ç›¸é«˜è¾¹PWM
+ * GPIOÒý½Å¶¨Òå - M1ÈýÏà¸ß±ßPWM
  * ============================================================================ */
-#define M1_AH_Pin GPIO_PIN_6              /* M1 Aç›¸é«˜è¾¹ */
+#define M1_AH_Pin GPIO_PIN_6              /* M1 AÏà¸ß±ß */
 #define M1_AH_GPIO_Port GPIOC
-#define M1_BH_Pin GPIO_PIN_7              /* M1 Bç›¸é«˜è¾¹ */
+#define M1_BH_Pin GPIO_PIN_7              /* M1 BÏà¸ß±ß */
 #define M1_BH_GPIO_Port GPIOC
-#define M1_CH_Pin GPIO_PIN_8              /* M1 Cç›¸é«˜è¾¹ */
+#define M1_CH_Pin GPIO_PIN_8              /* M1 CÏà¸ß±ß */
 #define M1_CH_GPIO_Port GPIOC
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - M0ç›´æµæ ¡å‡†å’Œä¸‰ç›¸é«˜è¾¹PWM
+ * GPIOÒý½Å¶¨Òå - M0Ö±Á÷Ð£×¼ºÍÈýÏà¸ß±ßPWM
  * ============================================================================ */
-#define M0_DC_CAL_Pin GPIO_PIN_9          /* M0ç”µæµé‡‡æ ·ç›´æµæ ¡å‡†ADCè¾“å…¥ */
+#define M0_DC_CAL_Pin GPIO_PIN_9          /* M0µçÁ÷²ÉÑùÖ±Á÷Ð£×¼ADCÊäÈë */
 #define M0_DC_CAL_GPIO_Port GPIOC
-#define M0_AH_Pin GPIO_PIN_8              /* M0 Aç›¸é«˜è¾¹ */
+#define M0_AH_Pin GPIO_PIN_8              /* M0 AÏà¸ß±ß */
 #define M0_AH_GPIO_Port GPIOA
-#define M0_BH_Pin GPIO_PIN_9              /* M0 Bç›¸é«˜è¾¹ */
+#define M0_BH_Pin GPIO_PIN_9              /* M0 BÏà¸ß±ß */
 #define M0_BH_GPIO_Port GPIOA
-#define M0_CH_Pin GPIO_PIN_10             /* M0 Cç›¸é«˜è¾¹ */
+#define M0_CH_Pin GPIO_PIN_10             /* M0 CÏà¸ß±ß */
 #define M0_CH_GPIO_Port GPIOA
 
 /* ============================================================================
- * GPIOå¼•è„šå®šä¹‰ - ç¼–ç å™¨æŽ¥å£
+ * GPIOÒý½Å¶¨Òå - ±àÂëÆ÷½Ó¿Ú
  * ============================================================================ */
-#define M0_ENC_Z_Pin GPIO_PIN_15          /* M0ç¼–ç å™¨Index(Zç›¸)è„‰å†² */
+#define M0_ENC_Z_Pin GPIO_PIN_15          /* M0±àÂëÆ÷Index(ZÏà)Âö³å */
 #define M0_ENC_Z_GPIO_Port GPIOA
-#define nFAULT_Pin GPIO_PIN_2             /* DRV8301æ•…éšœä¿¡å·(ä½Žç”µå¹³æœ‰æ•ˆ) */
+#define nFAULT_Pin GPIO_PIN_2             /* DRV8301¹ÊÕÏÐÅºÅ(µÍµçÆ½ÓÐÐ§) */
 #define nFAULT_GPIO_Port GPIOD
-#define M1_ENC_Z_Pin GPIO_PIN_3           /* M1ç¼–ç å™¨Index(Zç›¸)è„‰å†² */
+#define M1_ENC_Z_Pin GPIO_PIN_3           /* M1±àÂëÆ÷Index(ZÏà)Âö³å */
 #define M1_ENC_Z_GPIO_Port GPIOB
-#define M0_ENC_A_Pin GPIO_PIN_4           /* M0ç¼–ç å™¨Aç›¸ */
+#define M0_ENC_A_Pin GPIO_PIN_4           /* M0±àÂëÆ÷AÏà */
 #define M0_ENC_A_GPIO_Port GPIOB
-#define M0_ENC_B_Pin GPIO_PIN_5           /* M0ç¼–ç å™¨Bç›¸ */
+#define M0_ENC_B_Pin GPIO_PIN_5           /* M0±àÂëÆ÷BÏà */
 #define M0_ENC_B_GPIO_Port GPIOB
-#define M1_ENC_A_Pin GPIO_PIN_6           /* M1ç¼–ç å™¨Aç›¸ */
+#define M1_ENC_A_Pin GPIO_PIN_6           /* M1±àÂëÆ÷AÏà */
 #define M1_ENC_A_GPIO_Port GPIOB
-#define M1_ENC_B_Pin GPIO_PIN_7           /* M1ç¼–ç å™¨Bç›¸ */
+#define M1_ENC_B_Pin GPIO_PIN_7           /* M1±àÂëÆ÷BÏà */
 #define M1_ENC_B_GPIO_Port GPIOB

@@ -1,24 +1,24 @@
 /*
  * ============================================================================
- * 文件名: usbd_cdc_if.c
+ * �ļ���: usbd_cdc_if.c
  *
- * 文件用途:
- *   本文件实现USB CDC（Communication Device Class）接口的具体操作，包括
- *   数据收发、控制命令处理和接口初始化。USB CDC使设备在主机端呈现为虚拟串口。
+ * �ļ���;:
+ *   ���ļ�ʵ��USB CDC��Communication Device Class���ӿڵľ������������
+ *   �����շ�������������ͽӿڳ�ʼ����USB CDCʹ�豸�������˳���Ϊ���⴮�ڡ�
  *
- * 主要功能模块：
- *   1. CDC_Init_FS()：CDC接口初始化，配置发送/接收缓冲区（各64字节）
- *   2. CDC_DeInit_FS()：CDC接口去初始化
- *   3. CDC_Control_FS()：处理CDC控制命令（线路编码、控制线状态等）
- *   4. CDC_Receive_FS()：USB数据接收回调，保存命令并唤醒解析线程
- *   5. CDC_Transmit_FS()：通过USB CDC发送数据到主机
+ * ��Ҫ����ģ�飺
+ *   1. CDC_Init_FS()��CDC�ӿڳ�ʼ�������÷���/���ջ���������64�ֽڣ�
+ *   2. CDC_DeInit_FS()��CDC�ӿ�ȥ��ʼ��
+ *   3. CDC_Control_FS()������CDC���������·���롢������״̬�ȣ�
+ *   4. CDC_Receive_FS()��USB���ݽ��ջص�������������ѽ����߳�
+ *   5. CDC_Transmit_FS()��ͨ��USB CDC�������ݵ�����
  *
- * 缓冲区配置:
- *   - 接收缓冲区: 64字节
- *   - 发送缓冲区: 64字节
+ * ����������:
+ *   - ���ջ�����: 64�ֽ�
+ *   - ���ͻ�����: 64�ֽ�
  *
- * 作者: ODrive Robotics
- * 版本: v0.3.6
+ * ����: ODrive Robotics
+ * �汾: v0.3.6
  * ============================================================================
  */
 
@@ -27,6 +27,9 @@
 /* USER CODE BEGIN INCLUDE */
 #include "utils.h"
 #include "commands.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 #include <freertos_vars.h>
 /* USER CODE END INCLUDE */
 
@@ -35,7 +38,7 @@
   */
 
 /** @defgroup USBD_CDC 
-  * @brief usbd核心模块
+  * @brief usbd����ģ��
   * @{
   */ 
 
@@ -52,8 +55,8 @@
   * @{
   */ 
 /* USER CODE BEGIN PRIVATE_DEFINES */
-/* 自定义CDC缓冲区大小 */
-/* 用户可根据需要重新定义或移除这些定义 */
+/* �Զ���CDC��������С */
+/* �û��ɸ�����Ҫ���¶�����Ƴ���Щ���� */
 #define APP_RX_DATA_SIZE  64
 #define APP_TX_DATA_SIZE  64
 /* USER CODE END PRIVATE_DEFINES */
@@ -74,11 +77,11 @@
 /** @defgroup USBD_CDC_Private_Variables
   * @{
   */
-/* 创建接收和发送缓冲区 */
-/* 通过USB接收的数据存储在此缓冲区 */
+/* �������պͷ��ͻ����� */
+/* ͨ��USB���յ����ݴ洢�ڴ˻����� */
 uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 
-/* 通过USB发送的数据存储在此缓冲区 */
+/* ͨ��USB���͵����ݴ洢�ڴ˻����� */
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
@@ -123,18 +126,18 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
 };
 
 /**
- * @brief CDC接口初始化函数
+ * @brief CDC�ӿڳ�ʼ������
  * 
- * 功能说明：
- * 初始化CDC通信接口的底层USB传输缓冲区。
- * 设置发送和接收缓冲区的地址和大小。
+ * ����˵����
+ * ��ʼ��CDCͨ�Žӿڵĵײ�USB���仺������
+ * ���÷��ͺͽ��ջ������ĵ�ַ�ʹ�С��
  * 
- * @return USBD_OK: 初始化成功
+ * @return USBD_OK: ��ʼ���ɹ�
  */
 static int8_t CDC_Init_FS(void)
 { 
   /* USER CODE BEGIN 3 */ 
-  /* 设置应用程序缓冲区 */
+  /* ����Ӧ�ó��򻺳��� */
   USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
   return (USBD_OK);
@@ -142,13 +145,13 @@ static int8_t CDC_Init_FS(void)
 }
 
 /**
- * @brief CDC接口去初始化函数
+ * @brief CDC�ӿ�ȥ��ʼ������
  * 
- * 功能说明：
- * 释放CDC通信接口的底层USB传输资源。
- * 当前实现为空，因为USB设备库会自动管理资源。
+ * ����˵����
+ * �ͷ�CDCͨ�Žӿڵĵײ�USB������Դ��
+ * ��ǰʵ��Ϊ�գ���ΪUSB�豸����Զ�������Դ��
  * 
- * @return USBD_OK: 去初始化成功
+ * @return USBD_OK: ȥ��ʼ���ɹ�
  */
 static int8_t CDC_DeInit_FS(void)
 {
@@ -158,28 +161,28 @@ static int8_t CDC_DeInit_FS(void)
 }
 
 /**
- * @brief CDC控制命令处理函数
+ * @brief CDC�������������
  * 
- * 功能说明：
- * 处理CDC类的各种控制请求。CDC类定义了一组标准命令，用于配置虚拟串口参数。
- * 大多数命令在此项目中不需要特殊处理，因为USB通信参数由固件固定。
+ * ����˵����
+ * ����CDC��ĸ��ֿ�������CDC�ඨ����һ���׼��������������⴮�ڲ�����
+ * ����������ڴ���Ŀ�в���Ҫ���⴦������ΪUSBͨ�Ų����ɹ̼��̶���
  * 
- * 支持的命令：
- * - CDC_SEND_ENCAPSULATED_COMMAND: 发送封装命令（未使用）
- * - CDC_GET_ENCAPSULATED_RESPONSE: 获取封装响应（未使用）
- * - CDC_SET_COMM_FEATURE/CLEAR_COMM_FEATURE/GET_COMM_FEATURE: 通信特性管理（未使用）
- * - CDC_SET_LINE_CODING: 设置线路编码（波特率、停止位、校验位、数据位）
- * - CDC_GET_LINE_CODING: 获取线路编码
- * - CDC_SET_CONTROL_LINE_STATE: 设置控制线状态（DTR/RTS）
- * - CDC_SEND_BREAK: 发送中断信号
+ * ֧�ֵ����
+ * - CDC_SEND_ENCAPSULATED_COMMAND: ���ͷ�װ���δʹ�ã�
+ * - CDC_GET_ENCAPSULATED_RESPONSE: ��ȡ��װ��Ӧ��δʹ�ã�
+ * - CDC_SET_COMM_FEATURE/CLEAR_COMM_FEATURE/GET_COMM_FEATURE: ͨ�����Թ�����δʹ�ã�
+ * - CDC_SET_LINE_CODING: ������·���루�����ʡ�ֹͣλ��У��λ������λ��
+ * - CDC_GET_LINE_CODING: ��ȡ��·����
+ * - CDC_SET_CONTROL_LINE_STATE: ���ÿ�����״̬��DTR/RTS��
+ * - CDC_SEND_BREAK: �����ж��ź�
  * 
- * 注意：线路编码配置在此项目中被忽略，因为USB CDC是虚拟串口，
- * 实际通信速率由USB协议决定，与线路编码参数无关。
+ * ע�⣺��·���������ڴ���Ŀ�б����ԣ���ΪUSB CDC�����⴮�ڣ�
+ * ʵ��ͨ��������USBЭ�����������·��������޹ء�
  * 
- * @param cmd: 命令代码
- * @param pbuf: 包含命令数据的缓冲区
- * @param length: 数据长度
- * @return USBD_OK: 处理成功
+ * @param cmd: �������
+ * @param pbuf: �����������ݵĻ�����
+ * @param length: ���ݳ���
+ * @return USBD_OK: �����ɹ�
  */
 static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
 { 
@@ -207,21 +210,21 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
     break;
 
   /*******************************************************************************/
-  /* 线路编码结构体结构                                                           */
+  /* ��·����ṹ��ṹ                                                           */
   /*-----------------------------------------------------------------------------*/
-  /* 偏移量 | 字段        | 大小 | 值类型 | 描述                                 */
-  /* 0      | dwDTERate   |   4  | 数字   | 数据终端速率，比特/秒                 */
-  /* 4      | bCharFormat |   1  | 数字   | 停止位                               */
-  /*                                        0 - 1个停止位                        */
-  /*                                        1 - 1.5个停止位                      */
-  /*                                        2 - 2个停止位                        */
-  /* 5      | bParityType |  1   | 数字   | 校验位                               */
-  /*                                        0 - 无校验                           */
-  /*                                        1 - 奇校验                           */ 
-  /*                                        2 - 偶校验                           */
-  /*                                        3 - 标记校验                         */
-  /*                                        4 - 空格校验                         */
-  /* 6      | bDataBits  |   1   | 数字   | 数据位 (5, 6, 7, 8 或 16位)           */
+  /* ƫ���� | �ֶ�        | ��С | ֵ���� | ����                                 */
+  /* 0      | dwDTERate   |   4  | ����   | �����ն����ʣ�����/��                 */
+  /* 4      | bCharFormat |   1  | ����   | ֹͣλ                               */
+  /*                                        0 - 1��ֹͣλ                        */
+  /*                                        1 - 1.5��ֹͣλ                      */
+  /*                                        2 - 2��ֹͣλ                        */
+  /* 5      | bParityType |  1   | ����   | У��λ                               */
+  /*                                        0 - ��У��                           */
+  /*                                        1 - ��У��                           */ 
+  /*                                        2 - żУ��                           */
+  /*                                        3 - ���У��                         */
+  /*                                        4 - �ո�У��                         */
+  /* 6      | bDataBits  |   1   | ����   | ����λ (5, 6, 7, 8 �� 16λ)           */
   /*******************************************************************************/
   case CDC_SET_LINE_CODING:   
 	
@@ -248,82 +251,82 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
 }
 
 /**
- * @brief CDC数据接收函数
+ * @brief CDC���ݽ��պ���
  * 
- * 功能说明：
- * 当USB OUT端点接收到数据时，USB设备库会调用此函数。
- * 接收到的数据通过此函数传递给上层应用处理。
+ * ����˵����
+ * ��USB OUT�˵���յ�����ʱ��USB�豸�����ô˺�����
+ * ���յ�������ͨ���˺������ݸ��ϲ�Ӧ�ô�����
  * 
- * 处理流程：
- * 1. 在数据末尾添加null终止符，确保数据可以作为字符串处理
- * 2. 调用set_cmd_buffer()将数据保存到命令缓冲区
- * 3. 释放sem_usb_rx信号量，唤醒命令解析线程处理接收到的数据
+ * �������̣�
+ * 1. ������ĩβ����null��ֹ����ȷ�����ݿ�����Ϊ�ַ�������
+ * 2. ����set_cmd_buffer()�����ݱ��浽�������
+ * 3. �ͷ�sem_usb_rx�ź�����������������̴߳������յ�������
  * 
- * 注意：此函数在中断上下文中调用，应尽量简短快速。
- * 实际的数据处理在usb_update_thread线程中完成。
+ * ע�⣺�˺������ж��������е��ã�Ӧ������̿��١�
+ * ʵ�ʵ����ݴ�����usb_update_thread�߳�����ɡ�
  * 
- * @param Buf: 接收到的数据缓冲区指针
- * @param Len: 接收到的数据长度（字节）
- * @return USBD_OK: 处理成功
+ * @param Buf: ���յ������ݻ�����ָ��
+ * @param Len: ���յ������ݳ��ȣ��ֽڣ�
+ * @return USBD_OK: �����ɹ�
  */
 static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  // 在字符串末尾添加null终止符
+  // ���ַ���ĩβ����null��ֹ��
   int modified_len = MACRO_MIN(*Len+1, APP_RX_DATA_SIZE);
   Buf[modified_len-1] = 0;
 
-  // 将数据保存到命令缓冲区
+  // �����ݱ��浽�������
   set_cmd_buffer(Buf, modified_len);
-  // 释放接收信号量，唤醒命令解析线程
-  osSemaphoreRelease(sem_usb_rx);
+  // �ͷŽ����ź�����������������߳�
+  xSemaphoreGiveFromISR(sem_usb_rx, NULL);
 
   return (USBD_OK);
   /* USER CODE END 6 */ 
 }
 
 /**
- * @brief USB数据发送函数
+ * @brief USB���ݷ��ͺ���
  * 
- * 功能说明：
- * 通过USB CDC接口发送数据到上位机。
+ * ����˵����
+ * ͨ��USB CDC�ӿڷ������ݵ���λ����
  * 
- * 处理流程：
- * 1. 检查数据长度是否超过发送缓冲区大小(64字节)
- * 2. 检查是否有正在进行的传输（通过TxState标志）
- * 3. 将数据复制到发送缓冲区
- * 4. 更新发送缓冲区指针和长度
- * 5. 调用USBD_CDC_TransmitPacket()启动实际的数据传输
+ * �������̣�
+ * 1. ������ݳ����Ƿ񳬹����ͻ�������С(64�ֽ�)
+ * 2. ����Ƿ������ڽ��еĴ��䣨ͨ��TxState��־��
+ * 3. �����ݸ��Ƶ����ͻ�����
+ * 4. ���·��ͻ�����ָ��ͳ���
+ * 5. ����USBD_CDC_TransmitPacket()����ʵ�ʵ����ݴ���
  * 
- * 并发控制：
- * 通过检查hcdc->TxState标志确保同一时间只有一个传输在进行。
- * 如果TxState != 0，表示上一次传输尚未完成，返回USBD_BUSY。
+ * �������ƣ�
+ * ͨ�����hcdc->TxState��־ȷ��ͬһʱ��ֻ��һ�������ڽ��С�
+ * ���TxState != 0����ʾ��һ�δ�����δ��ɣ�����USBD_BUSY��
  * 
- * 调用方式：
- * 此函数由syscalls.c中的_write()函数调用，实现printf通过USB输出。
- * 调用前需等待sem_usb_tx信号量，确保USB接口可用。
+ * ���÷�ʽ��
+ * �˺�����syscalls.c�е�_write()�������ã�ʵ��printfͨ��USB�����
+ * ����ǰ��ȴ�sem_usb_tx�ź�����ȷ��USB�ӿڿ��á�
  * 
- * @param Buf: 要发送的数据缓冲区指针
- * @param Len: 要发送的数据长度（字节）
- * @return USBD_OK: 发送成功启动
- *         USBD_FAIL: 数据长度超过缓冲区大小
- *         USBD_BUSY: 上一次传输尚未完成
+ * @param Buf: Ҫ���͵����ݻ�����ָ��
+ * @param Len: Ҫ���͵����ݳ��ȣ��ֽڣ�
+ * @return USBD_OK: ���ͳɹ�����
+ *         USBD_FAIL: ���ݳ��ȳ�����������С
+ *         USBD_BUSY: ��һ�δ�����δ���
  */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 {
   uint8_t result = USBD_OK;
   /* USER CODE BEGIN 7 */ 
   
-  // 检查数据长度是否超过发送缓冲区
+  // ������ݳ����Ƿ񳬹����ͻ�����
   if (Len > APP_TX_DATA_SIZE)
     return USBD_FAIL;
-  // 检查是否有正在进行的传输
+  // ����Ƿ������ڽ��еĴ���
   USBD_CDC_HandleTypeDef* hcdc = (USBD_CDC_HandleTypeDef*) hUsbDeviceFS.pClassData;
   if (hcdc->TxState != 0)
     return USBD_BUSY;
-  // 复制数据到发送缓冲区
+  // �������ݵ����ͻ�����
   memcpy(UserTxBufferFS, Buf, Len);
-  // 更新发送缓冲区长度
+  // ���·��ͻ���������
   USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, Len);
   result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
   /* USER CODE END 7 */ 

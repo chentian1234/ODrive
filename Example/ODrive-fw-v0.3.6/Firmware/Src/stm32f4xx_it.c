@@ -1,36 +1,33 @@
 /*
  * ============================================================================
- * æ–‡ä»¶å: stm32f4xx_it.c
+ * ÎÄ¼þÃû: stm32f4xx_it.c
+ * 
+ * ÎÄ¼þÓÃÍ¾:
+ *   ±¾ÎÄ¼þÊµÏÖÁËSTM32F4ÏµÁÐÎ¢¿ØÖÆÆ÷µÄÖÐ¶Ï·þÎñÀý³Ì(ISR)¡£Ö÷Òª´¦ÀíCortex-M4ÄÚºËÒì³£ºÍSTM32F4ÍâÉèÖÐ¶Ï¡£
+ *   °üÀ¨ADCÖÐ¶Ï·Ö·¢¡¢USBÖÐ¶ÏÑÓ³Ù´¦ÀíµÈ¹¦ÄÜ¡£
  *
- * æ–‡ä»¶ç”¨é€”:
- *   æœ¬æ–‡ä»¶åŒ…å«æ‰€æœ‰ä¸­æ–­æœåŠ¡å‡½æ•°ï¼ˆISRï¼‰ï¼ŒåŒ…æ‹¬Cortex-M4å†…æ ¸å¼‚å¸¸å¤„ç†å’ŒSTM32F4å¤–è®¾ä¸­æ–­ã€‚
- *   é‡‡ç”¨è‡ªå®šä¹‰ADCä¸­æ–­åˆ†å‘æœºåˆ¶å’ŒUSBä¸­æ–­å»¶è¿Ÿå¤„ç†ï¼Œä¼˜åŒ–ç”µæœºæŽ§åˆ¶çš„å®žæ—¶æ€§èƒ½ã€‚
+ * ÖÐ¶Ï·þÎñ·Ö×é:
+ *   1. Cortex-M4ÄÚºËÒì³£: NMI¡¢HardFault¡¢MemManage¡¢BusFault¡¢UsageFault¡¢SysTick
+ *   2. DMAÖÐ¶Ï: DMA1_Stream2(UART4 RX)¡¢DMA1_Stream4(UART4 TX)
+ *   3. ADCÖÐ¶Ï: Í¨¹ýADC_IRQ_Dispatch·Ö·¢µ½HAL»Øµ÷º¯Êý
+ *   4. TIMÖÐ¶Ï: TIM8_TRG_COM_TIM14ÖÐ¶Ï´¦Àí
+ *   5. UARTÖÐ¶Ï: UART4ÖÐ¶Ï´¦Àí
+ *   6. USBÖÐ¶Ï: OTG_FSÖÐ¶Ï´¦Àí(ÑÓ³Ùµ½Ïß³Ì´¦Àí)
+ *   7. EXTIÖÐ¶Ï: EXTI0/2/4Íâ²¿ÖÐ¶Ï´¦Àí
  *
- * ä¸»è¦åŠŸèƒ½æ¨¡å—ï¼š
- *   1. Cortex-M4å¼‚å¸¸å¤„ç†ï¼šNMIã€HardFaultã€MemManageã€BusFaultã€UsageFaultã€SysTick
- *   2. DMAä¸­æ–­ï¼šDMA1_Stream2(UART4 RX)ã€DMA1_Stream4(UART4 TX)
- *   3. ADCä¸­æ–­ï¼šè‡ªå®šä¹‰åˆ†å‘å™¨ADC_IRQ_Dispatchï¼Œç»•è¿‡HALåº“ç›´æŽ¥å›žè°ƒ
- *   4. TIMä¸­æ–­ï¼šTIM8_TRG_COM_TIM14ä¸­æ–­å¤„ç†
- *   5. UARTä¸­æ–­ï¼šUART4ä¸­æ–­å¤„ç†
- *   6. USBä¸­æ–­ï¼šOTG_FSä¸­æ–­ï¼Œé‡‡ç”¨ä¿¡å·é‡å»¶è¿Ÿå¤„ç†æœºåˆ¶
- *   7. EXTIä¸­æ–­ï¼šEXTI0/2/4å¤–éƒ¨ä¸­æ–­å¤„ç†ï¼ˆæ­¥è¿›ä¿¡å·ï¼‰
+ * ÌØÊâ´¦Àí:
+ *   - ADCÖÐ¶Ï: ²»Ö±½Óµ÷ÓÃHAL´¦Àíº¯Êý£¬¶øÊÇÍ¨¹ý×Ô¶¨Òå·Ö·¢Æ÷´¦Àí
+ *   - USBÖÐ¶Ï: Ê¹ÓÃÐÅºÅÁ¿ÑÓ³Ùµ½Ïß³Ì´¦Àí£¬±ÜÃâÔÚÖÐ¶ÏÖÐÖ´ÐÐºÄÊ±²Ù×÷
  *
- * æ€§èƒ½ä¼˜åŒ–:
- *   - ADCä¸­æ–­: ç›´æŽ¥æ£€æŸ¥æ ‡å¿—ä½å¹¶è°ƒç”¨å›žè°ƒï¼Œç»•è¿‡HALåº“å‡å°‘ä¸­æ–­å»¶è¿Ÿ
- *   - USBä¸­æ–­: ç«‹å³å±è”½ä¸­æ–­å¹¶é€šè¿‡ä¿¡å·é‡å”¤é†’çº¿ç¨‹ï¼Œåœ¨ç”¨æˆ·ç©ºé—´å¤„ç†
- *
- * ä½œè€…: ODrive Robotics
- * ç‰ˆæœ¬: v0.3.6
+ * ×÷Õß: ODrive Robotics
+ * °æ±¾: v0.3.6
  * ============================================================================
  */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx.h"
 #include "stm32f4xx_it.h"
-#include "cmsis_os.h"
-
-/* USER CODE BEGIN 0 */
-#include "freertos_vars.h"
+#include "freertos_vars.h"  /* FreeRTOS ÐÅºÅÁ¿¾ä±úÉùÃ÷ */
 #include "low_level.h"
 
 typedef void (*ADC_handler_t)(ADC_HandleTypeDef* hadc, bool injected);
@@ -51,12 +48,12 @@ extern UART_HandleTypeDef huart4;
 extern TIM_HandleTypeDef htim14;
 
 /******************************************************************************/
-/*            Cortex-M4å¤„ç†å™¨ä¸­æ–­å’Œå¼‚å¸¸å¤„ç†å‡½æ•°         */ 
+/*            Cortex-M4ÄÚºËÒì³£ÖÐ¶Ï·þÎñ³ÌÐò                                    */ 
 /******************************************************************************/
 
 /**
-* @brief ä¸å¯å±è”½ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief ²»¿ÉÆÁ±ÎÖÐ¶Ï(NMI)·þÎñ³ÌÐò
+ */
 void NMI_Handler(void)
 {
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
@@ -68,8 +65,8 @@ void NMI_Handler(void)
 }
 
 /**
-* @brief ç¡¬ä»¶é”™è¯¯ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief Ó²¼þ´íÎó(HardFault)ÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
@@ -84,8 +81,8 @@ void HardFault_Handler(void)
 }
 
 /**
-* @brief å†…å­˜ç®¡ç†é”™è¯¯ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief ÄÚ´æ¹ÜÀí(MemManage)´íÎóÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void MemManage_Handler(void)
 {
   /* USER CODE BEGIN MemoryManagement_IRQn 0 */
@@ -100,8 +97,8 @@ void MemManage_Handler(void)
 }
 
 /**
-* @brief æ€»çº¿é”™è¯¯ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief ×ÜÏß´íÎó(BusFault)ÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void BusFault_Handler(void)
 {
   /* USER CODE BEGIN BusFault_IRQn 0 */
@@ -116,8 +113,8 @@ void BusFault_Handler(void)
 }
 
 /**
-* @brief éžæ³•æŒ‡ä»¤æˆ–éžæ³•çŠ¶æ€ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief Î´¶¨ÒåÖ¸Áî/×´Ì¬(UsageFault)ÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void UsageFault_Handler(void)
 {
   /* USER CODE BEGIN UsageFault_IRQn 0 */
@@ -132,8 +129,8 @@ void UsageFault_Handler(void)
 }
 
 /**
-* @brief è°ƒè¯•ç›‘è§†å™¨ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief µ÷ÊÔ¼àÊÓÆ÷(DebugMonitor)ÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void DebugMon_Handler(void)
 {
   /* USER CODE BEGIN DebugMonitor_IRQn 0 */
@@ -145,29 +142,28 @@ void DebugMon_Handler(void)
 }
 
 /**
-* @brief ç³»ç»Ÿæ»´ç­”å®šæ—¶å™¨ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief ÏµÍ³µÎ´ð(SysTick)¶¨Ê±Æ÷ÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
   /* USER CODE END SysTick_IRQn 0 */
-  osSystickHandler();
+  xPortSysTickHandler();
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
   /* USER CODE END SysTick_IRQn 1 */
 }
 
 /******************************************************************************/
-/* STM32F4xxå¤–è®¾ä¸­æ–­å¤„ç†å‡½æ•°                                    */
-/* åœ¨æ­¤æ·»åŠ æ‰€ä½¿ç”¨å¤–è®¾çš„ä¸­æ–­å¤„ç†å‡½æ•°ã€‚                  */
-/* å¯ç”¨çš„å¤–è®¾ä¸­æ–­å¤„ç†å‡½æ•°åç§°ï¼Œ                      */
-/* è¯·å‚è€ƒå¯åŠ¨æ–‡ä»¶(startup_stm32f4xx.s)ã€‚                    */
+/* STM32F4xxÍâÉèÖÐ¶Ï·þÎñ³ÌÐò                                                  */
+/* ÒÔÏÂº¯ÊýÊÇSTM32F4xxÍâÉèµÄÖÐ¶Ï·þÎñ³ÌÐò                                      */
+/* ¾ßÌåÖÐ¶ÏÏòÁ¿Ãû³ÆÇë²Î¿¼Æô¶¯ÎÄ¼þ(startup_stm32f4xx.s)                        */
 /******************************************************************************/
 
 /**
-* @brief DMA1 Stream2å…¨å±€ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief DMA1 Stream2È«¾ÖÖÐ¶Ï·þÎñ³ÌÐò(UART4 RX DMA)
+ */
 void DMA1_Stream2_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
@@ -180,8 +176,8 @@ void DMA1_Stream2_IRQHandler(void)
 }
 
 /**
-* @brief DMA1 Stream4å…¨å±€ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief DMA1 Stream4È«¾ÖÖÐ¶Ï·þÎñ³ÌÐò(UART4 TX DMA)
+ */
 void DMA1_Stream4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream4_IRQn 0 */
@@ -194,34 +190,34 @@ void DMA1_Stream4_IRQHandler(void)
 }
 
 /**
-* @brief ADC1, ADC2å’ŒADC3å…¨å±€ä¸­æ–­å¤„ç†å‡½æ•°
-* @brief ADCä¸­æ–­æœåŠ¡å‡½æ•°ï¼ˆè¢«ADC_IRQHandlerè°ƒç”¨ï¼‰
-* 
-* åŠŸèƒ½è¯´æ˜Žï¼š
-* å¤„ç†ADC1/ADC2/ADC3çš„ä¸­æ–­è¯·æ±‚ã€‚ä¸ºäº†å‡å°‘HALåº“çš„å¤„ç†å¼€é”€ï¼Œ
-* æ­¤å‡½æ•°ç»•è¿‡äº†æ ‡å‡†çš„HAL_ADC_IRQHandler()ï¼Œç›´æŽ¥ä½¿ç”¨è‡ªå®šä¹‰çš„
-* ADC_IRQ_Dispatch()å‡½æ•°æ¥åˆ†å‘ä¸­æ–­ã€‚
-* 
-* ä¸­æ–­åˆ†å‘é€»è¾‘ï¼š
-* - hadc1: è°ƒç”¨vbus_sense_adc_cb()å¤„ç†æ¯çº¿ç”µåŽ‹é‡‡æ ·ä¸­æ–­
-* - hadc2: è°ƒç”¨pwm_trig_adc_cb()å¤„ç†PWMè§¦å‘çš„ADCé‡‡æ ·ä¸­æ–­
-* - hadc3: è°ƒç”¨pwm_trig_adc_cb()å¤„ç†PWMè§¦å‘çš„ADCé‡‡æ ·ä¸­æ–­
-* 
-* æ€§èƒ½ä¼˜åŒ–ï¼š
-* HALåº“çš„ADCä¸­æ–­å¤„ç†ä¼šå¢žåŠ å¤§é‡æ—¶é’Ÿå‘¨æœŸï¼Œå½±å“ç”µæœºæŽ§åˆ¶çš„å®žæ—¶æ€§ã€‚
-* è‡ªå®šä¹‰å¤„ç†åªæ£€æŸ¥å¿…è¦çš„æ ‡å¿—ä½å¹¶ç«‹å³è°ƒç”¨å›žè°ƒï¼Œå¤§å¹…å‡å°‘ä¸­æ–­å»¶è¿Ÿã€‚
-*/
+ * @brief ADC1¡¢ADC2ºÍADC3È«¾ÖÖÐ¶Ï·þÎñ³ÌÐò
+ * @brief ADCÖÐ¶Ï·Ö·¢º¯Êý - ADC_IRQHandlerÊµÏÖ
+ * 
+ * º¯ÊýËµÃ÷:
+ * ÓÉÓÚADC1/ADC2/ADC3¹²ÏíÍ¬Ò»¸öÖÐ¶ÏÏòÁ¿£¬±¾º¯ÊýÍ¨¹ý×Ô¶¨Òå·Ö·¢Æ÷´¦ÀíÖÐ¶Ï£¬
+ * ¶ø²»ÊÇÖ±½Óµ÷ÓÃHAL_ADC_IRQHandler()¡£ÕâÑù¿ÉÒÔ¸üÁé»îµØ¿ØÖÆÖÐ¶Ï´¦ÀíÁ÷³Ì¡£
+ * ADC_IRQ_Dispatch()º¯Êý¸ºÔð½«ÖÐ¶Ï·Ö·¢µ½¶ÔÓ¦µÄ»Øµ÷º¯Êý¡£
+ * 
+ * ÖÐ¶Ï´¦ÀíËµÃ÷:
+ * - hadc1: ÓÃÓÚvbus_sense_adc_cb()»Øµ÷£¬´¦Àí×ÜÏßµçÑ¹²ÉÑùÖÐ¶Ï
+ * - hadc2: ÓÃÓÚpwm_trig_adc_cb()»Øµ÷£¬´¦ÀíPWM´¥·¢µÄµç»úµçÁ÷²ÉÑùÖÐ¶Ï
+ * - hadc3: ÓÃÓÚpwm_trig_adc_cb()»Øµ÷£¬´¦ÀíPWM´¥·¢µÄµç»úµçÁ÷²ÉÑùÖÐ¶Ï
+ * 
+ * ·µ»ØÖµËµÃ÷:
+ * Ö±½Ó·µ»Ø¶ø²»µ÷ÓÃHAL´¦Àíº¯Êý£¬ÒòÎªADC_IRQ_DispatchÒÑ¾­´¦ÀíÁËËùÓÐÖÐ¶Ï±êÖ¾¡£
+ * HAL¿âµÄADCÖÐ¶Ï´¦Àíº¯Êý»áÖ´ÐÐ¶îÍâµÄ×´Ì¬¼ì²éºÍ»Øµ÷µ÷ÓÃ£¬µ«ÔÚ´ËÓ¦ÓÃÖÐ²»ÐèÒªÕâÐ©¹¦ÄÜ¡£
+ */
 void ADC_IRQHandler(void)
 {
   /* USER CODE BEGIN ADC_IRQn 0 */
 
-  // ç»•è¿‡HALåº“çš„ADCå¤„ç†ï¼Œç›´æŽ¥ä½¿ç”¨è‡ªå®šä¹‰åˆ†å‘å™¨
-  //@TODO åœ¨æ­¤æ·»åŠ adc1çš„vbusæµ‹é‡
+  // Ê¹ÓÃ×Ô¶¨Òå·Ö·¢Æ÷´¦ÀíADCÖÐ¶Ï£¬¶ø²»ÊÇÖ±½Óµ÷ÓÃHAL´¦Àíº¯Êý
+  //@TODO ¼ò»¯´¦Àíadc1×ÜÏßµçÑ¹²ÉÑù
   ADC_IRQ_Dispatch(&hadc1, &vbus_sense_adc_cb);
   ADC_IRQ_Dispatch(&hadc2, &pwm_trig_adc_cb);
   ADC_IRQ_Dispatch(&hadc3, &pwm_trig_adc_cb);
 
-  // ç»•è¿‡HALåº“çš„æ ‡å‡†å¤„ç†æµç¨‹
+  // Ö±½Ó·µ»Ø¶ø²»µ÷ÓÃHAL´¦Àíº¯Êý
   return;
 
   /* USER CODE END ADC_IRQn 0 */
@@ -234,8 +230,8 @@ void ADC_IRQHandler(void)
 }
 
 /**
-* @brief TIM8è§¦å‘å’Œæ¢ç›¸ä¸­æ–­ä»¥åŠTIM14å…¨å±€ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief TIM8´¥·¢/»»Ïà/¸üÐÂÖÐ¶ÏºÍTIM14È«¾ÖÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void TIM8_TRG_COM_TIM14_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM8_TRG_COM_TIM14_IRQn 0 */
@@ -249,8 +245,8 @@ void TIM8_TRG_COM_TIM14_IRQHandler(void)
 }
 
 /**
-* @brief UART4å…¨å±€ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief UART4È«¾ÖÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void UART4_IRQHandler(void)
 {
   /* USER CODE BEGIN UART4_IRQn 0 */
@@ -263,31 +259,31 @@ void UART4_IRQHandler(void)
 }
 
 /**
-* @brief USB OTG FSå…¨å±€ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief USB OTG FSÈ«¾ÖÖÐ¶Ï·þÎñ³ÌÐò
+ */
 /**
- * @brief USBä¸­æ–­æœåŠ¡å‡½æ•°
+ * @brief USBÖÐ¶Ï´¦Àíº¯Êý
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å¤„ç†USB OTG FSçš„ä¸­æ–­è¯·æ±‚ã€‚é‡‡ç”¨å»¶è¿Ÿå¤„ç†æœºåˆ¶ï¼š
- * 1. ç«‹å³å±è”½USBä¸­æ–­ï¼Œé˜²æ­¢ä¸­æ–­åµŒå¥—
- * 2. é‡Šæ”¾sem_usb_irqä¿¡å·é‡ï¼Œå”¤é†’usb_update_threadçº¿ç¨‹
- * 3. çº¿ç¨‹ä¼šåœ¨ç”¨æˆ·ç©ºé—´å¤„ç†æ‰€æœ‰å¾…å¤„ç†çš„USBä¸­æ–­
- * 4. å¤„ç†å®ŒæˆåŽï¼Œçº¿ç¨‹ä¼šé‡æ–°ä½¿èƒ½USBä¸­æ–­
+ * º¯ÊýËµÃ÷:
+ * µ±USB OTG FSÖÐ¶Ï´¥·¢Ê±£¬Ö´ÐÐÒÔÏÂ²Ù×÷:
+ * 1. Á¢¼´½ûÓÃUSBÖÐ¶Ï£¬·ÀÖ¹ÖÐ¶ÏÇ¶Ì×
+ * 2. ÊÍ·Åsem_usb_irqÐÅºÅÁ¿£¬Í¨Öªusb_update_threadÏß³Ì´¦Àí
+ * 3. ÖÐ¶Ï´¦ÀíÍê³ÉºóÁ¢¼´·µ»Ø£¬Êµ¼ÊµÄUSBÊÂ¼þ´¦ÀíÔÚÏß³ÌÖÐÍê³É
+ * 4. usb_update_threadÏß³Ì´¦ÀíÍê³Éºó»áÖØÐÂÊ¹ÄÜUSBÖÐ¶Ï
  * 
- * ä¼˜åŠ¿ï¼š
- * - å‡å°‘ä¸­æ–­å¤„ç†æ—¶é—´ï¼Œæé«˜ç³»ç»Ÿå“åº”é€Ÿåº¦
- * - æ‰€æœ‰USBå¤„ç†åœ¨åŒä¸€ä¸ªçº¿ç¨‹ä¸­å®Œæˆï¼Œé¿å…å¹¶å‘é—®é¢˜
- * - ä¸­æ–­å±è”½é˜²æ­¢äº†ä¸­æ–­é£Žæš´
+ * Éè¼ÆÔ­Òò:
+ * - USBÖÐ¶Ï´¦Àí½ÏÎªºÄÊ±£¬²»ÊÊºÏÔÚÖÐ¶ÏÉÏÏÂÎÄÖÐÖ´ÐÐ
+ * - Ê¹ÓÃÐÅºÅÁ¿+Ïß³ÌµÄ·½Ê½¿ÉÒÔÌá¸ßÏµÍ³ÊµÊ±ÐÔ
+ * - ÖÐ¶Ï´¦ÀíÍê³ÉºóÐèÒªÊÖ¶¯ÖØÐÂÊ¹ÄÜÖÐ¶Ï£¬·ñÔò»á¶ªÊ§ºóÐøÖÐ¶Ï
  */
 void OTG_FS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
 
-  // å±è”½ä¸­æ–­ï¼Œå¹¶é€šè¿‡ä¿¡å·é‡é€šçŸ¥usb_cmd_threadå¤„ç†
+  // ½ûÓÃUSBÖÐ¶Ï£¬µÈ´ýusb_update_threadÏß³Ì´¦ÀíÍê³ÉºóÔÙÊ¹ÄÜ
   HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
-  osSemaphoreRelease(sem_usb_irq);
-  // ç»•è¿‡æ ‡å‡†ä¸­æ–­å¤„ç†æµç¨‹
+  xSemaphoreGiveFromISR(sem_usb_irq, NULL);
+  // Á¢¼´·µ»Ø£¬Êµ¼ÊµÄUSB´¦ÀíÔÚÏß³ÌÖÐÍê³É
   return;
 
   /* USER CODE END OTG_FS_IRQn 0 */
@@ -299,16 +295,23 @@ void OTG_FS_IRQHandler(void)
 
 /* USER CODE BEGIN 1 */
 
+/**
+ * @brief ADCÖÐ¶Ï·Ö·¢º¯Êý
+ * 
+ * º¯Êý¹¦ÄÜ:
+ * ¼ì²éADCµÄÖÐ¶Ï±êÖ¾Î»£¬Èç¹ûÖÐ¶ÏÒÑÊ¹ÄÜÇÒ±êÖ¾ÖÃÎ»£¬Ôòµ÷ÓÃ¶ÔÓ¦µÄ»Øµ÷º¯Êý¡£
+ * Ö§³Ö×¢Èë×ª»»(Injected)ºÍ¹æÔò×ª»»(Regular)Á½ÖÖÄ£Ê½µÄÖÐ¶Ï´¦Àí¡£
+ */
 void ADC_IRQ_Dispatch(ADC_HandleTypeDef* hadc, ADC_handler_t callback) {
 
-  // æ³¨å…¥é€šé“æµ‹é‡
+  // ¼ì²é×¢Èë×ª»»½áÊø±êÖ¾
   uint32_t JEOC = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_JEOC);
   uint32_t JEOC_IT_EN = __HAL_ADC_GET_IT_SOURCE(hadc, ADC_IT_JEOC);
   if (JEOC && JEOC_IT_EN) {
     callback(hadc, true);
     __HAL_ADC_CLEAR_FLAG(hadc, (ADC_FLAG_JSTRT | ADC_FLAG_JEOC));
   }
-  // å¸¸è§„é€šé“æµ‹é‡
+  // ¼ì²é¹æÔò×ª»»½áÊø±êÖ¾
   uint32_t EOC = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOC);
   uint32_t EOC_IT_EN = __HAL_ADC_GET_IT_SOURCE(hadc, ADC_IT_EOC);
   if (EOC && EOC_IT_EN) {
@@ -319,28 +322,27 @@ void ADC_IRQ_Dispatch(ADC_HandleTypeDef* hadc, ADC_handler_t callback) {
 
 
 /**
-* @brief EXTI line0å¤–éƒ¨ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief EXTI line0Íâ²¿ÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void EXTI0_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
 }
 
 /**
-* @brief EXTI line2å¤–éƒ¨ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief EXTI line2Íâ²¿ÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void EXTI2_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
 }
 
 /**
-* @brief EXTI line4å¤–éƒ¨ä¸­æ–­å¤„ç†å‡½æ•°
-*/
+ * @brief EXTI line4Íâ²¿ÖÐ¶Ï·þÎñ³ÌÐò
+ */
 void EXTI4_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
 }
 
 /* USER CODE END 1 */
-

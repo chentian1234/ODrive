@@ -1,25 +1,25 @@
 /*
  * ============================================================================
- * æ–‡ä»¶å: adc.c
+ * ÎÄ¼þÃû: adc.c
  *
- * æ–‡ä»¶ç”¨é€”:
- *   æœ¬æ–‡ä»¶å®žçŽ°STM32F4 ADCå¤–è®¾çš„é©±åŠ¨å±‚ï¼Œç”¨äºŽç”µæœºç”µæµé‡‡æ ·ã€ç›´æµæ¯çº¿ç”µåŽ‹é‡‡æ ·
- *   å’Œè¾…åŠ©ä¿¡å·é‡‡é›†ã€‚æ”¯æŒå¸¸è§„è½¬æ¢å’Œæ³¨å…¥è½¬æ¢ä¸¤ç§æ¨¡å¼ã€‚
+ * ÎÄ¼þÓÃÍ¾:
+ *   ±¾ÎÄ¼þÊµÏÖSTM32F4 ADCÍâÉèµÄÇý¶¯²ã£¬ÓÃÓÚµç»úµçÁ÷²ÉÑù¡¢Ö±Á÷Ä¸ÏßµçÑ¹²ÉÑù
+ *   ºÍ¸¨ÖúÐÅºÅ²É¼¯¡£Ö§³Ö³£¹æ×ª»»ºÍ×¢Èë×ª»»Á½ÖÖÄ£Ê½¡£
  *
- * ä¸»è¦åŠŸèƒ½æ¨¡å—ï¼š
- *   1. ADC1é…ç½®ï¼šM1ç”µæœºç”µæµé‡‡æ ·ï¼ˆå¸¸è§„é€šé“ï¼‰+ M0ç”µæœºç”µæµé‡‡æ ·ï¼ˆæ³¨å…¥é€šé“ï¼‰
- *   2. ADC2é…ç½®ï¼šM1ç”µæœºç”µæµé‡‡æ ·ï¼ˆå¸¸è§„é€šé“ï¼‰+ M0ç”µæœºç”µæµé‡‡æ ·ï¼ˆæ³¨å…¥é€šé“ï¼‰
- *   3. ADC3é…ç½®ï¼šç›´æµæ¯çº¿ç”µåŽ‹é‡‡æ ·ï¼ˆå¸¸è§„é€šé“ï¼‰+ ç”µæœºç”µæµé‡‡æ ·ï¼ˆæ³¨å…¥é€šé“ï¼‰
- *   4. MSPå±‚åˆå§‹åŒ–/åŽ»åˆå§‹åŒ–ï¼šGPIOæ¨¡æ‹Ÿè¾“å…¥é…ç½®ã€ADCä¸­æ–­é…ç½®
- *   5. read_ADC_volts()ï¼šè¯»å–ADCåŽŸå§‹å€¼å¹¶è½¬æ¢ä¸ºå®žé™…ç”µåŽ‹å€¼
+ * Ö÷Òª¹¦ÄÜÄ£¿é£º
+ *   1. ADC1ÅäÖÃ£ºM1µç»úµçÁ÷²ÉÑù£¨³£¹æÍ¨µÀ£©+ M0µç»úµçÁ÷²ÉÑù£¨×¢ÈëÍ¨µÀ£©
+ *   2. ADC2ÅäÖÃ£ºM1µç»úµçÁ÷²ÉÑù£¨³£¹æÍ¨µÀ£©+ M0µç»úµçÁ÷²ÉÑù£¨×¢ÈëÍ¨µÀ£©
+ *   3. ADC3ÅäÖÃ£ºÖ±Á÷Ä¸ÏßµçÑ¹²ÉÑù£¨³£¹æÍ¨µÀ£©+ µç»úµçÁ÷²ÉÑù£¨×¢ÈëÍ¨µÀ£©
+ *   4. MSP²ã³õÊ¼»¯/È¥³õÊ¼»¯£ºGPIOÄ£ÄâÊäÈëÅäÖÃ¡¢ADCÖÐ¶ÏÅäÖÃ
+ *   5. read_ADC_volts()£º¶ÁÈ¡ADCÔ­Ê¼Öµ²¢×ª»»ÎªÊµ¼ÊµçÑ¹Öµ
  *
- * ADCè§¦å‘æœºåˆ¶:
- *   - TIM1 TRGOè§¦å‘æ³¨å…¥è½¬æ¢ï¼ˆç”¨äºŽM0ç”µæœºFOCç”µæµé‡‡æ ·ï¼‰
- *   - TIM8 TRGOè§¦å‘å¸¸è§„è½¬æ¢ï¼ˆç”¨äºŽM1ç”µæœºFOCç”µæµé‡‡æ ·ï¼‰
- *   - åœ¨PWMå‘¨æœŸä¸­å¿ƒç‚¹å¯¹é½æ—¶åˆ»é‡‡æ ·ï¼Œé¿å¼€å¼€å…³å™ªå£°
+ * ADC´¥·¢»úÖÆ:
+ *   - TIM1 TRGO´¥·¢×¢Èë×ª»»£¨ÓÃÓÚM0µç»úFOCµçÁ÷²ÉÑù£©
+ *   - TIM8 TRGO´¥·¢³£¹æ×ª»»£¨ÓÃÓÚM1µç»úFOCµçÁ÷²ÉÑù£©
+ *   - ÔÚPWMÖÜÆÚÖÐÐÄµã¶ÔÆëÊ±¿Ì²ÉÑù£¬±Ü¿ª¿ª¹ØÔëÉù
  *
- * ä½œè€…: ODrive Robotics
- * ç‰ˆæœ¬: v0.3.6
+ * ×÷Õß: ODrive Robotics
+ * °æ±¾: v0.3.6
  * ============================================================================
  */
 
@@ -40,17 +40,17 @@ ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 ADC_HandleTypeDef hadc3;
 
-/* ADC1 åˆå§‹åŒ–å‡½æ•°
- * ç”¨é€”: é…ç½®ADC1ç”¨äºŽç”µæœºç”µæµé‡‡æ ·ï¼Œæ”¯æŒå¸¸è§„è½¬æ¢å’Œæ³¨å…¥è½¬æ¢ä¸¤ç§æ¨¡å¼
- * - å¸¸è§„è½¬æ¢: ç”±T8å®šæ—¶å™¨è§¦å‘ï¼Œç”¨äºŽé‡‡æ ·M1ç”µæœºç›¸å…³ä¿¡å·
- * - æ³¨å…¥è½¬æ¢: ç”±T1å®šæ—¶å™¨è§¦å‘ï¼Œç”¨äºŽé‡‡æ ·M0ç”µæœºç”µæµä¿¡å·
+/* ADC1 ³õÊ¼»¯º¯Êý
+ * ÓÃÍ¾: ÅäÖÃADC1ÓÃÓÚµç»úµçÁ÷²ÉÑù£¬Ö§³Ö³£¹æ×ª»»ºÍ×¢Èë×ª»»Á½ÖÖÄ£Ê½
+ * - ³£¹æ×ª»»: ÓÉT8¶¨Ê±Æ÷´¥·¢£¬ÓÃÓÚ²ÉÑùM1µç»úÏà¹ØÐÅºÅ
+ * - ×¢Èë×ª»»: ÓÉT1¶¨Ê±Æ÷´¥·¢£¬ÓÃÓÚ²ÉÑùM0µç»úµçÁ÷ÐÅºÅ
  */
 void MX_ADC1_Init(void)
 {
   ADC_ChannelConfTypeDef sConfig;
   ADC_InjectionConfTypeDef sConfigInjected;
 
-  /* é…ç½®ADCå…¨å±€å‚æ•°ï¼ˆæ—¶é’Ÿã€åˆ†è¾¨çŽ‡ã€æ•°æ®å¯¹é½å’Œè½¬æ¢æ¬¡æ•°ï¼‰ */
+  /* ÅäÖÃADCÈ«¾Ö²ÎÊý£¨Ê±ÖÓ¡¢·Ö±æÂÊ¡¢Êý¾Ý¶ÔÆëºÍ×ª»»´ÎÊý£© */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
@@ -68,7 +68,7 @@ void MX_ADC1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  /* é…ç½®ADC1å¸¸è§„é€šé“åŠå…¶åœ¨åºåˆ—å™¨ä¸­çš„ rank å’Œé‡‡æ ·æ—¶é—´ */
+  /* ÅäÖÃADC1³£¹æÍ¨µÀ¼°ÆäÔÚÐòÁÐÆ÷ÖÐµÄ rank ºÍ²ÉÑùÊ±¼ä */
   sConfig.Channel = ADC_CHANNEL_6;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -77,7 +77,7 @@ void MX_ADC1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  /* é…ç½®ADC1æ³¨å…¥é€šé“åŠå…¶åœ¨åºåˆ—å™¨ä¸­çš„ rank å’Œé‡‡æ ·æ—¶é—´ */
+  /* ÅäÖÃADC1×¢ÈëÍ¨µÀ¼°ÆäÔÚÐòÁÐÆ÷ÖÐµÄ rank ºÍ²ÉÑùÊ±¼ä */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_6;
   sConfigInjected.InjectedRank = 1;
   sConfigInjected.InjectedNbrOfConversion = 1;
@@ -93,17 +93,17 @@ void MX_ADC1_Init(void)
   }
 
 }
-/* ADC2 åˆå§‹åŒ–å‡½æ•°
- * ç”¨é€”: é…ç½®ADC2ç”¨äºŽç”µæœºç”µæµé‡‡æ ·
- * - å¸¸è§„è½¬æ¢: ç”±T8å®šæ—¶å™¨è§¦å‘ï¼Œé‡‡æ ·M1ç”µæœºç”µæµï¼ˆé€šé“13ï¼‰
- * - æ³¨å…¥è½¬æ¢: ç”±T1å®šæ—¶å™¨è§¦å‘ï¼Œé‡‡æ ·M0ç”µæœºç”µæµï¼ˆé€šé“10ï¼‰
+/* ADC2 ³õÊ¼»¯º¯Êý
+ * ÓÃÍ¾: ÅäÖÃADC2ÓÃÓÚµç»úµçÁ÷²ÉÑù
+ * - ³£¹æ×ª»»: ÓÉT8¶¨Ê±Æ÷´¥·¢£¬²ÉÑùM1µç»úµçÁ÷£¨Í¨µÀ13£©
+ * - ×¢Èë×ª»»: ÓÉT1¶¨Ê±Æ÷´¥·¢£¬²ÉÑùM0µç»úµçÁ÷£¨Í¨µÀ10£©
  */
 void MX_ADC2_Init(void)
 {
   ADC_ChannelConfTypeDef sConfig;
   ADC_InjectionConfTypeDef sConfigInjected;
 
-  /* é…ç½®ADCå…¨å±€å‚æ•°ï¼ˆæ—¶é’Ÿã€åˆ†è¾¨çŽ‡ã€æ•°æ®å¯¹é½å’Œè½¬æ¢æ¬¡æ•°ï¼‰ */
+  /* ÅäÖÃADCÈ«¾Ö²ÎÊý£¨Ê±ÖÓ¡¢·Ö±æÂÊ¡¢Êý¾Ý¶ÔÆëºÍ×ª»»´ÎÊý£© */
   hadc2.Instance = ADC2;
   hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc2.Init.Resolution = ADC_RESOLUTION_12B;
@@ -121,7 +121,7 @@ void MX_ADC2_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  /* é…ç½®ADC2å¸¸è§„é€šé“åŠå…¶åœ¨åºåˆ—å™¨ä¸­çš„ rank å’Œé‡‡æ ·æ—¶é—´ */
+  /* ÅäÖÃADC2³£¹æÍ¨µÀ¼°ÆäÔÚÐòÁÐÆ÷ÖÐµÄ rank ºÍ²ÉÑùÊ±¼ä */
   sConfig.Channel = ADC_CHANNEL_13;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -130,7 +130,7 @@ void MX_ADC2_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  /* é…ç½®ADC2æ³¨å…¥é€šé“åŠå…¶åœ¨åºåˆ—å™¨ä¸­çš„ rank å’Œé‡‡æ ·æ—¶é—´ */
+  /* ÅäÖÃADC2×¢ÈëÍ¨µÀ¼°ÆäÔÚÐòÁÐÆ÷ÖÐµÄ rank ºÍ²ÉÑùÊ±¼ä */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_10;
   sConfigInjected.InjectedRank = 1;
   sConfigInjected.InjectedNbrOfConversion = 1;
@@ -146,17 +146,17 @@ void MX_ADC2_Init(void)
   }
 
 }
-/* ADC3 åˆå§‹åŒ–å‡½æ•°
- * ç”¨é€”: é…ç½®ADC3ç”¨äºŽç›´æµæ¯çº¿ç”µåŽ‹é‡‡æ ·å’Œå…¶ä»–æ¨¡æ‹Ÿä¿¡å·é‡‡é›†
- * - å¸¸è§„è½¬æ¢: ç”±T8å®šæ—¶å™¨è§¦å‘ï¼Œé‡‡æ ·æ¯çº¿ç”µåŽ‹ç›¸å…³ä¿¡å·ï¼ˆé€šé“12ï¼‰
- * - æ³¨å…¥è½¬æ¢: ç”±T1å®šæ—¶å™¨è§¦å‘ï¼Œé‡‡æ ·ç”µæœºç”µæµä¿¡å·ï¼ˆé€šé“11ï¼‰
+/* ADC3 ³õÊ¼»¯º¯Êý
+ * ÓÃÍ¾: ÅäÖÃADC3ÓÃÓÚÖ±Á÷Ä¸ÏßµçÑ¹²ÉÑùºÍÆäËûÄ£ÄâÐÅºÅ²É¼¯
+ * - ³£¹æ×ª»»: ÓÉT8¶¨Ê±Æ÷´¥·¢£¬²ÉÑùÄ¸ÏßµçÑ¹Ïà¹ØÐÅºÅ£¨Í¨µÀ12£©
+ * - ×¢Èë×ª»»: ÓÉT1¶¨Ê±Æ÷´¥·¢£¬²ÉÑùµç»úµçÁ÷ÐÅºÅ£¨Í¨µÀ11£©
  */
 void MX_ADC3_Init(void)
 {
   ADC_ChannelConfTypeDef sConfig;
   ADC_InjectionConfTypeDef sConfigInjected;
 
-  /* é…ç½®ADCå…¨å±€å‚æ•°ï¼ˆæ—¶é’Ÿã€åˆ†è¾¨çŽ‡ã€æ•°æ®å¯¹é½å’Œè½¬æ¢æ¬¡æ•°ï¼‰ */
+  /* ÅäÖÃADCÈ«¾Ö²ÎÊý£¨Ê±ÖÓ¡¢·Ö±æÂÊ¡¢Êý¾Ý¶ÔÆëºÍ×ª»»´ÎÊý£© */
   hadc3.Instance = ADC3;
   hadc3.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc3.Init.Resolution = ADC_RESOLUTION_12B;
@@ -174,7 +174,7 @@ void MX_ADC3_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  /* é…ç½®ADC3å¸¸è§„é€šé“åŠå…¶åœ¨åºåˆ—å™¨ä¸­çš„ rank å’Œé‡‡æ ·æ—¶é—´ */
+  /* ÅäÖÃADC3³£¹æÍ¨µÀ¼°ÆäÔÚÐòÁÐÆ÷ÖÐµÄ rank ºÍ²ÉÑùÊ±¼ä */
   sConfig.Channel = ADC_CHANNEL_12;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -183,7 +183,7 @@ void MX_ADC3_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  /* é…ç½®ADC3æ³¨å…¥é€šé“åŠå…¶åœ¨åºåˆ—å™¨ä¸­çš„ rank å’Œé‡‡æ ·æ—¶é—´ */
+  /* ÅäÖÃADC3×¢ÈëÍ¨µÀ¼°ÆäÔÚÐòÁÐÆ÷ÖÐµÄ rank ºÍ²ÉÑùÊ±¼ä */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_11;
   sConfigInjected.InjectedRank = 1;
   sConfigInjected.InjectedNbrOfConversion = 1;
@@ -201,22 +201,22 @@ void MX_ADC3_Init(void)
 }
 
 /**
- * @brief ADCå¤–è®¾åº•å±‚åˆå§‹åŒ–å›žè°ƒå‡½æ•°ï¼ˆç”±HALåº“è‡ªåŠ¨è°ƒç”¨ï¼‰
+ * @brief ADCÍâÉèµ×²ã³õÊ¼»¯»Øµ÷º¯Êý£¨ÓÉHAL¿â×Ô¶¯µ÷ÓÃ£©
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å½“è°ƒç”¨HAL_ADC_Init()æ—¶ï¼ŒHALåº“ä¼šè‡ªåŠ¨è°ƒç”¨æ­¤å‡½æ•°æ¥é…ç½®ADCçš„åº•å±‚ç¡¬ä»¶èµ„æºã€‚
- * æ ¹æ®ä¸åŒçš„ADCå®žä¾‹ï¼ˆADC1/ADC2/ADC3ï¼‰ï¼Œåˆ†åˆ«é…ç½®å¯¹åº”çš„GPIOå¼•è„šå’Œä¸­æ–­ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * µ±µ÷ÓÃHAL_ADC_Init()Ê±£¬HAL¿â»á×Ô¶¯µ÷ÓÃ´Ëº¯ÊýÀ´ÅäÖÃADCµÄµ×²ãÓ²¼þ×ÊÔ´¡£
+ * ¸ù¾Ý²»Í¬µÄADCÊµÀý£¨ADC1/ADC2/ADC3£©£¬·Ö±ðÅäÖÃ¶ÔÓ¦µÄGPIOÒý½ÅºÍÖÐ¶Ï¡£
  * 
- * GPIOé…ç½®è¯´æ˜Žï¼š
- * - PC0-PC5: é…ç½®ä¸ºæ¨¡æ‹Ÿè¾“å…¥æ¨¡å¼ï¼Œç”¨äºŽé‡‡é›†ç”µæœºç”µæµä¿¡å·ï¼ˆM0_IB, M0_IC, M1_IC, M1_IBï¼‰
- *            ä»¥åŠè¾…åŠ©é©±åŠ¨å™¨æ¸©åº¦ï¼ˆAUX_TEMPï¼‰å’ŒM0ç”µæœºæ¸©åº¦ï¼ˆM0_TEMPï¼‰
- * - PA4-PA6: é…ç½®ä¸ºæ¨¡æ‹Ÿè¾“å…¥æ¨¡å¼ï¼Œç”¨äºŽé‡‡é›†M1ç”µæœºæ¸©åº¦ï¼ˆM1_TEMPï¼‰ã€è¾…åŠ©é©±åŠ¨ç”µæµï¼ˆAUX_Iï¼‰
- *            å’Œç›´æµæ¯çº¿ç”µåŽ‹ï¼ˆVBUS_Sï¼‰
+ * GPIOÅäÖÃËµÃ÷£º
+ * - PC0-PC5: ÅäÖÃÎªÄ£ÄâÊäÈëÄ£Ê½£¬ÓÃÓÚ²É¼¯µç»úµçÁ÷ÐÅºÅ£¨M0_IB, M0_IC, M1_IC, M1_IB£©
+ *            ÒÔ¼°¸¨ÖúÇý¶¯Æ÷ÎÂ¶È£¨AUX_TEMP£©ºÍM0µç»úÎÂ¶È£¨M0_TEMP£©
+ * - PA4-PA6: ÅäÖÃÎªÄ£ÄâÊäÈëÄ£Ê½£¬ÓÃÓÚ²É¼¯M1µç»úÎÂ¶È£¨M1_TEMP£©¡¢¸¨ÖúÇý¶¯µçÁ÷£¨AUX_I£©
+ *            ºÍÖ±Á÷Ä¸ÏßµçÑ¹£¨VBUS_S£©
  * 
- * ä¸­æ–­é…ç½®ï¼š
- * - ADC_IRQn: ä¼˜å…ˆçº§è®¾ä¸º5ï¼Œç”¨äºŽADCè½¬æ¢å®Œæˆä¸­æ–­
+ * ÖÐ¶ÏÅäÖÃ£º
+ * - ADC_IRQn: ÓÅÏÈ¼¶ÉèÎª5£¬ÓÃÓÚADC×ª»»Íê³ÉÖÐ¶Ï
  * 
- * @param adcHandle: ADCå¥æŸ„æŒ‡é’ˆï¼ŒæŒ‡å‘è¦åˆå§‹åŒ–çš„ADCå®žä¾‹
+ * @param adcHandle: ADC¾ä±úÖ¸Õë£¬Ö¸ÏòÒª³õÊ¼»¯µÄADCÊµÀý
  */
 void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 {
@@ -227,10 +227,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE BEGIN ADC1_MspInit 0 */
 
   /* USER CODE END ADC1_MspInit 0 */
-    /* ä½¿èƒ½ADC1æ—¶é’Ÿ */
+    /* Ê¹ÄÜADC1Ê±ÖÓ */
     __HAL_RCC_ADC1_CLK_ENABLE();
   
-    /**ADC1 GPIOé…ç½®    
+    /**ADC1 GPIOÅäÖÃ    
     PC0     ------> ADC1_IN10
     PC1     ------> ADC1_IN11
     PC2     ------> ADC1_IN12
@@ -252,7 +252,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    /* ADC1ä¸­æ–­åˆå§‹åŒ– */
+    /* ADC1ÖÐ¶Ï³õÊ¼»¯ */
     HAL_NVIC_SetPriority(ADC_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC1_MspInit 1 */
@@ -264,10 +264,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE BEGIN ADC2_MspInit 0 */
 
   /* USER CODE END ADC2_MspInit 0 */
-    /* ä½¿èƒ½ADC2æ—¶é’Ÿ */
+    /* Ê¹ÄÜADC2Ê±ÖÓ */
     __HAL_RCC_ADC2_CLK_ENABLE();
   
-    /**ADC2 GPIOé…ç½®    
+    /**ADC2 GPIOÅäÖÃ    
     PC0     ------> ADC2_IN10
     PC1     ------> ADC2_IN11
     PC2     ------> ADC2_IN12
@@ -289,7 +289,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    /* ADC2ä¸­æ–­åˆå§‹åŒ– */
+    /* ADC2ÖÐ¶Ï³õÊ¼»¯ */
     HAL_NVIC_SetPriority(ADC_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC2_MspInit 1 */
@@ -301,10 +301,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE BEGIN ADC3_MspInit 0 */
 
   /* USER CODE END ADC3_MspInit 0 */
-    /* ä½¿èƒ½ADC3æ—¶é’Ÿ */
+    /* Ê¹ÄÜADC3Ê±ÖÓ */
     __HAL_RCC_ADC3_CLK_ENABLE();
   
-    /**ADC3 GPIOé…ç½®    
+    /**ADC3 GPIOÅäÖÃ    
     PC0     ------> ADC3_IN10
     PC1     ------> ADC3_IN11
     PC2     ------> ADC3_IN12
@@ -315,7 +315,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    /* ADC3ä¸­æ–­åˆå§‹åŒ– */
+    /* ADC3ÖÐ¶Ï³õÊ¼»¯ */
     HAL_NVIC_SetPriority(ADC_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC3_MspInit 1 */
@@ -325,13 +325,13 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /**
- * @brief ADCå¤–è®¾åº•å±‚åŽ»åˆå§‹åŒ–å›žè°ƒå‡½æ•°ï¼ˆç”±HALåº“è‡ªåŠ¨è°ƒç”¨ï¼‰
+ * @brief ADCÍâÉèµ×²ãÈ¥³õÊ¼»¯»Øµ÷º¯Êý£¨ÓÉHAL¿â×Ô¶¯µ÷ÓÃ£©
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * å½“è°ƒç”¨HAL_ADC_DeInit()æ—¶ï¼ŒHALåº“ä¼šè‡ªåŠ¨è°ƒç”¨æ­¤å‡½æ•°æ¥é‡Šæ”¾ADCçš„åº•å±‚ç¡¬ä»¶èµ„æºã€‚
- * åŒ…æ‹¬ç¦ç”¨ADCæ—¶é’Ÿã€å¤ä½GPIOå¼•è„šé…ç½®ã€ç¦ç”¨ä¸­æ–­ç­‰ã€‚
+ * ¹¦ÄÜËµÃ÷£º
+ * µ±µ÷ÓÃHAL_ADC_DeInit()Ê±£¬HAL¿â»á×Ô¶¯µ÷ÓÃ´Ëº¯ÊýÀ´ÊÍ·ÅADCµÄµ×²ãÓ²¼þ×ÊÔ´¡£
+ * °üÀ¨½ûÓÃADCÊ±ÖÓ¡¢¸´Î»GPIOÒý½ÅÅäÖÃ¡¢½ûÓÃÖÐ¶ÏµÈ¡£
  * 
- * @param adcHandle: ADCå¥æŸ„æŒ‡é’ˆï¼ŒæŒ‡å‘è¦åŽ»åˆå§‹åŒ–çš„ADCå®žä¾‹
+ * @param adcHandle: ADC¾ä±úÖ¸Õë£¬Ö¸ÏòÒªÈ¥³õÊ¼»¯µÄADCÊµÀý
  */
 void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 {
@@ -341,10 +341,10 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE BEGIN ADC1_MspDeInit 0 */
 
   /* USER CODE END ADC1_MspDeInit 0 */
-    /* ç¦ç”¨ADC1å¤–è®¾æ—¶é’Ÿ */
+    /* ½ûÓÃADC1ÍâÉèÊ±ÖÓ */
     __HAL_RCC_ADC1_CLK_DISABLE();
   
-    /**ADC1 GPIOé…ç½®    
+    /**ADC1 GPIOÅäÖÃ    
     PC0     ------> ADC1_IN10
     PC1     ------> ADC1_IN11
     PC2     ------> ADC1_IN12
@@ -360,11 +360,11 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 
     HAL_GPIO_DeInit(GPIOA, M1_TEMP_Pin|AUX_I_Pin|VBUS_S_Pin);
 
-    /* ADC1ä¸­æ–­åŽ»åˆå§‹åŒ– */
+    /* ADC1ÖÐ¶ÏÈ¥³õÊ¼»¯ */
   /* USER CODE BEGIN ADC1:ADC_IRQn disable */
     /**
-    * å–æ¶ˆæ³¨é‡Šä»¥ä¸‹è¡Œå¯ç¦ç”¨"ADC_IRQn"ä¸­æ–­
-    * æ³¨æ„ï¼šç¦ç”¨å…±äº«ä¸­æ–­å¯èƒ½å½±å“å…¶ä»–å¤–è®¾
+    * È¡Ïû×¢ÊÍÒÔÏÂÐÐ¿É½ûÓÃ"ADC_IRQn"ÖÐ¶Ï
+    * ×¢Òâ£º½ûÓÃ¹²ÏíÖÐ¶Ï¿ÉÄÜÓ°ÏìÆäËûÍâÉè
     */
     /* HAL_NVIC_DisableIRQ(ADC_IRQn); */
   /* USER CODE END ADC1:ADC_IRQn disable */
@@ -378,10 +378,10 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE BEGIN ADC2_MspDeInit 0 */
 
   /* USER CODE END ADC2_MspDeInit 0 */
-    /* ç¦ç”¨ADC2å¤–è®¾æ—¶é’Ÿ */
+    /* ½ûÓÃADC2ÍâÉèÊ±ÖÓ */
     __HAL_RCC_ADC2_CLK_DISABLE();
   
-    /**ADC2 GPIOé…ç½®    
+    /**ADC2 GPIOÅäÖÃ    
     PC0     ------> ADC2_IN10
     PC1     ------> ADC2_IN11
     PC2     ------> ADC2_IN12
@@ -397,11 +397,11 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 
     HAL_GPIO_DeInit(GPIOA, M1_TEMP_Pin|AUX_I_Pin|VBUS_S_Pin);
 
-    /* ADC2ä¸­æ–­åŽ»åˆå§‹åŒ– */
+    /* ADC2ÖÐ¶ÏÈ¥³õÊ¼»¯ */
   /* USER CODE BEGIN ADC2:ADC_IRQn disable */
     /**
-    * å–æ¶ˆæ³¨é‡Šä»¥ä¸‹è¡Œå¯ç¦ç”¨"ADC_IRQn"ä¸­æ–­
-    * æ³¨æ„ï¼šç¦ç”¨å…±äº«ä¸­æ–­å¯èƒ½å½±å“å…¶ä»–å¤–è®¾
+    * È¡Ïû×¢ÊÍÒÔÏÂÐÐ¿É½ûÓÃ"ADC_IRQn"ÖÐ¶Ï
+    * ×¢Òâ£º½ûÓÃ¹²ÏíÖÐ¶Ï¿ÉÄÜÓ°ÏìÆäËûÍâÉè
     */
     /* HAL_NVIC_DisableIRQ(ADC_IRQn); */
   /* USER CODE END ADC2:ADC_IRQn disable */
@@ -415,10 +415,10 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE BEGIN ADC3_MspDeInit 0 */
 
   /* USER CODE END ADC3_MspDeInit 0 */
-    /* ç¦ç”¨ADC3å¤–è®¾æ—¶é’Ÿ */
+    /* ½ûÓÃADC3ÍâÉèÊ±ÖÓ */
     __HAL_RCC_ADC3_CLK_DISABLE();
   
-    /**ADC3 GPIOé…ç½®    
+    /**ADC3 GPIOÅäÖÃ    
     PC0     ------> ADC3_IN10
     PC1     ------> ADC3_IN11
     PC2     ------> ADC3_IN12
@@ -426,11 +426,11 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     */
     HAL_GPIO_DeInit(GPIOC, M0_IB_Pin|M0_IC_Pin|M1_IC_Pin|M1_IB_Pin);
 
-    /* ADC3ä¸­æ–­åŽ»åˆå§‹åŒ– */
+    /* ADC3ÖÐ¶ÏÈ¥³õÊ¼»¯ */
   /* USER CODE BEGIN ADC3:ADC_IRQn disable */
     /**
-    * å–æ¶ˆæ³¨é‡Šä»¥ä¸‹è¡Œå¯ç¦ç”¨"ADC_IRQn"ä¸­æ–­
-    * æ³¨æ„ï¼šç¦ç”¨å…±äº«ä¸­æ–­å¯èƒ½å½±å“å…¶ä»–å¤–è®¾
+    * È¡Ïû×¢ÊÍÒÔÏÂÐÐ¿É½ûÓÃ"ADC_IRQn"ÖÐ¶Ï
+    * ×¢Òâ£º½ûÓÃ¹²ÏíÖÐ¶Ï¿ÉÄÜÓ°ÏìÆäËûÍâÉè
     */
     /* HAL_NVIC_DisableIRQ(ADC_IRQn); */
   /* USER CODE END ADC3:ADC_IRQn disable */
@@ -442,30 +442,30 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 } 
 
 /* USER CODE BEGIN 1 */
-#endif  /* ADCåŒ…å«ç»“æŸ */
+#endif  /* ADC°üº¬½áÊø */
 
 /**
- * @brief è¯»å–ADCè½¬æ¢ç»“æžœå¹¶è½¬æ¢ä¸ºç”µåŽ‹å€¼
+ * @brief ¶ÁÈ¡ADC×ª»»½á¹û²¢×ª»»ÎªµçÑ¹Öµ
  * 
- * åŠŸèƒ½è¯´æ˜Žï¼š
- * æ ¹æ®ADCå¥æŸ„å’Œè½¬æ¢ç±»åž‹ï¼ˆå¸¸è§„æˆ–æ³¨å…¥ï¼‰ï¼Œè¯»å–ADCè½¬æ¢ç»“æžœå¹¶å°†å…¶è½¬æ¢ä¸ºå®žé™…ç”µåŽ‹å€¼ã€‚
- * è½¬æ¢å…¬å¼: voltage = (3.3V / 4096) * ADC_Value
- * å…¶ä¸­3.3Væ˜¯ADCå‚è€ƒç”µåŽ‹ï¼Œ4096æ˜¯12ä½ADCçš„æœ€å¤§å€¼(2^12)
+ * ¹¦ÄÜËµÃ÷£º
+ * ¸ù¾ÝADC¾ä±úºÍ×ª»»ÀàÐÍ£¨³£¹æ»ò×¢Èë£©£¬¶ÁÈ¡ADC×ª»»½á¹û²¢½«Æä×ª»»ÎªÊµ¼ÊµçÑ¹Öµ¡£
+ * ×ª»»¹«Ê½: voltage = (3.3V / 4096) * ADC_Value
+ * ÆäÖÐ3.3VÊÇADC²Î¿¼µçÑ¹£¬4096ÊÇ12Î»ADCµÄ×î´óÖµ(2^12)
  * 
- * @param hadc: ADCå¥æŸ„æŒ‡é’ˆï¼ŒæŒ‡å‘è¦è¯»å–çš„ADCå®žä¾‹
- * @param injected_rank: æ³¨å…¥é€šé“åºå·ï¼Œå¦‚æžœä¸º0åˆ™è¯»å–å¸¸è§„è½¬æ¢ç»“æžœ
- * @return float: è½¬æ¢åŽçš„ç”µåŽ‹å€¼ï¼ˆå•ä½ï¼šä¼ç‰¹ï¼‰
+ * @param hadc: ADC¾ä±úÖ¸Õë£¬Ö¸ÏòÒª¶ÁÈ¡µÄADCÊµÀý
+ * @param injected_rank: ×¢ÈëÍ¨µÀÐòºÅ£¬Èç¹ûÎª0Ôò¶ÁÈ¡³£¹æ×ª»»½á¹û
+ * @return float: ×ª»»ºóµÄµçÑ¹Öµ£¨µ¥Î»£º·üÌØ£©
  */
 float read_ADC_volts(ADC_HandleTypeDef* hadc, uint8_t injected_rank) {
     uint32_t ADCValue;
     if(injected_rank) {
-        /* è¯»å–æ³¨å…¥è½¬æ¢ç»“æžœ */
+        /* ¶ÁÈ¡×¢Èë×ª»»½á¹û */
         ADCValue = HAL_ADCEx_InjectedGetValue(hadc, injected_rank);
     } else {
-        /* è¯»å–å¸¸è§„è½¬æ¢ç»“æžœ */
+        /* ¶ÁÈ¡³£¹æ×ª»»½á¹û */
         ADCValue = HAL_ADC_GetValue(hadc);
     }
-    /* å°†ADCåŽŸå§‹å€¼è½¬æ¢ä¸ºç”µåŽ‹å€¼: 3.3Vå‚è€ƒç”µåŽ‹ / 4096(12ä½åˆ†è¾¨çŽ‡) */
+    /* ½«ADCÔ­Ê¼Öµ×ª»»ÎªµçÑ¹Öµ: 3.3V²Î¿¼µçÑ¹ / 4096(12Î»·Ö±æÂÊ) */
     return (3.3f/((float)(1<<12))) * ADCValue;
 }
 

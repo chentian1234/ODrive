@@ -608,16 +608,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>FreeRTOS/CMSIS_RTOS</GroupName>
-          <Files>
-            <File>
-              <FileName>cmsis_os.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>STM32_USB_Device_Library</GroupName>
           <Files>
             <File>
