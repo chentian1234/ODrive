@@ -1,51 +1,24 @@
-/**
-  ******************************************************************************
-  * @file           : USB_DEVICE  
-  * @version        : v1.0_Cube
-  * @brief          : This file implements the USB Device 
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-*/
+/*
+ * ============================================================================
+ * 文件名: usb_device.c
+ *
+ * 文件用途:
+ *   本文件实现USB Device设备的初始化配置，将STM32F4配置为CDC类虚拟串口设备，
+ *   使电机控制器可以通过USB与上位机通信。
+ *
+ * 主要功能模块：
+ *   1. MX_USB_DEVICE_Init()：USB设备初始化
+ *      - USBD_Init(): 初始化USB设备库，加载设备描述符
+ *      - USBD_RegisterClass(): 注册CDC类
+ *      - USBD_CDC_RegisterInterface(): 注册CDC接口回调函数
+ *      - USBD_Start(): 启动USB设备，开始监听主机连接
+ *
+ * 注意：此函数必须在FreeRTOS初始化之前调用，确保USB枚举过程尽早开始
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -55,17 +28,32 @@
 #include "usbd_cdc.h"
 #include "usbd_cdc_if.h"
 
-/* USB Device Core handle declaration */
+/* USB Device Core handle - USB设备核心句柄 */
 USBD_HandleTypeDef hUsbDeviceFS;
 
-/* init function */                                        
+/**
+ * @brief USB设备初始化函数
+ * 
+ * 功能说明：
+ * 初始化USB OTG FS设备，配置为CDC(Communication Device Class)类，
+ * 实现虚拟串口功能，使电机控制器可以通过USB与上位机通信。
+ * 
+ * 初始化流程：
+ * 1. USBD_Init(): 初始化USB设备库，加载设备描述符(FS_Desc)
+ * 2. USBD_RegisterClass(): 注册CDC类，使设备支持USB CDC协议
+ * 3. USBD_CDC_RegisterInterface(): 注册CDC接口回调函数
+ *    (USBD_Interface_fops_FS)，用于处理CDC类的具体操作
+ * 4. USBD_Start(): 启动USB设备，开始监听USB主机连接
+ * 
+ * 注意：此函数必须在FreeRTOS初始化之前调用，确保USB枚举过程尽早开始
+ */
 void MX_USB_DEVICE_Init(void)
 {
   /* USER CODE BEGIN USB_DEVICE_Init_PreTreatment */
   
   /* USER CODE END USB_DEVICE_Init_PreTreatment */
   
-  /* Init Device Library,Add Supported Class and Start the library*/
+  /* 初始化设备库，注册支持的类并启动库 */
   USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS);
 
   USBD_RegisterClass(&hUsbDeviceFS, &USBD_CDC);
@@ -86,4 +74,3 @@ void MX_USB_DEVICE_Init(void)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

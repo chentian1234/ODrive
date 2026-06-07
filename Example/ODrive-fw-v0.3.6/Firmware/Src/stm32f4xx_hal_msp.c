@@ -1,51 +1,21 @@
-/**
-  ******************************************************************************
-  * File Name          : stm32f4xx_hal_msp.c
-  * Description        : This file provides code for the MSP Initialization 
-  *                      and de-Initialization codes.
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+/*
+ * ============================================================================
+ * 文件名: stm32f4xx_hal_msp.c
+ *
+ * 文件用途:
+ *   本文件实现HAL库的MSP（MCU Support Package）初始化，配置全局中断优先级分组
+ *   和系统异常的优先级。HAL_Init()会自动调用HAL_MspInit()。
+ *
+ * 主要功能模块：
+ *   1. HAL_MspInit()：全局MSP初始化
+ *      - 设置中断优先级分组为NVIC_PRIORITYGROUP_4（4位抢占优先级）
+ *      - 配置系统异常优先级（MemoryManagement/BusFault/UsageFault = 0）
+ *      - PendSV/SysTick设为最低优先级（15），用于FreeRTOS任务切换
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 
@@ -54,7 +24,18 @@ extern void _Error_Handler(char *, int);
 
 /* USER CODE END 0 */
 /**
-  * Initializes the Global MSP.
+  * @brief 全局MSP初始化函数
+  * 
+  * 功能说明：
+  * 此函数由HAL_Init()自动调用，用于配置全局的硬件相关初始化。
+  * 主要设置中断优先级分组和各系统异常的优先级。
+  * 
+  * 中断优先级配置：
+  * - NVIC_PRIORITYGROUP_4: 4位抢占优先级，0位子优先级
+  * - MemoryManagement/BusFault/UsageFault: 优先级0（最高）
+  * - SVCall/DebugMonitor: 优先级0
+  * - PendSV: 优先级15（最低），用于FreeRTOS任务切换
+  * - SysTick: 优先级15（最低），用于系统时基
   */
 void HAL_MspInit(void)
 {
@@ -62,22 +43,23 @@ void HAL_MspInit(void)
 
   /* USER CODE END MspInit 0 */
 
+  /* 设置中断优先级分组为4位抢占优先级 */
   HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 
-  /* System interrupt init*/
-  /* MemoryManagement_IRQn interrupt configuration */
+  /* 系统异常中断优先级配置 */
+  /* 内存管理异常 - 最高优先级 */
   HAL_NVIC_SetPriority(MemoryManagement_IRQn, 0, 0);
-  /* BusFault_IRQn interrupt configuration */
+  /* 总线错误异常 - 最高优先级 */
   HAL_NVIC_SetPriority(BusFault_IRQn, 0, 0);
-  /* UsageFault_IRQn interrupt configuration */
+  /* 用法错误异常 - 最高优先级 */
   HAL_NVIC_SetPriority(UsageFault_IRQn, 0, 0);
-  /* SVCall_IRQn interrupt configuration */
+  /* SVCall异常 - 最高优先级 */
   HAL_NVIC_SetPriority(SVCall_IRQn, 0, 0);
-  /* DebugMonitor_IRQn interrupt configuration */
+  /* 调试监视器异常 - 最高优先级 */
   HAL_NVIC_SetPriority(DebugMonitor_IRQn, 0, 0);
-  /* PendSV_IRQn interrupt configuration */
+  /* PendSV异常 - 最低优先级，用于FreeRTOS任务切换 */
   HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
-  /* SysTick_IRQn interrupt configuration */
+  /* SysTick异常 - 最低优先级，用于系统时基 */
   HAL_NVIC_SetPriority(SysTick_IRQn, 15, 0);
 
   /* USER CODE BEGIN MspInit 1 */
@@ -97,4 +79,3 @@ void HAL_MspInit(void)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

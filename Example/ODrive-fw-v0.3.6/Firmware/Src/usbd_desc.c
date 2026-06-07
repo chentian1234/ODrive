@@ -1,51 +1,27 @@
-/**
-  ******************************************************************************
-  * @file           : usbd_desc.c
-  * @version        : v1.0_Cube
-  * @brief          : This file implements the USB Device descriptors
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-*/
+/*
+ * ============================================================================
+ * 文件名: usbd_desc.c
+ *
+ * 文件用途:
+ *   本文件定义USB设备的所有描述符，包括设备描述符、配置描述符、字符串描述符等。
+ *   这些描述符在USB枚举过程中被主机读取，用于识别设备的类型、厂商和功能。
+ *
+ * 主要功能模块：
+ *   1. 设备描述符：VID/PID、USB版本、设备类别（CDC类）
+ *   2. 字符串描述符：制造商(ODrive)、产品名称(ODrive v3.x)、序列号
+ *   3. BOS描述符：LPM电源管理支持
+ *   4. 描述符获取函数：按类型返回对应的描述符缓冲区
+ *
+ * USB描述符参数:
+ *   - VID: 0x1209
+ *   - PID: 0x0D31
+ *   - 制造商: "ODrive"
+ *   - 产品名: 根据硬件版本动态显示 (ODrive v3.1~v3.4)
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_core.h"
@@ -227,11 +203,10 @@ __ALIGN_BEGIN uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ] __ALIGN_END;
   */ 
 
 /**
-* @brief  USBD_FS_DeviceDescriptor 
-*         return the device descriptor
-* @param  speed : current device speed
-* @param  length : pointer to data length variable
-* @retval pointer to descriptor buffer
+* @brief  返回设备描述符
+* @param  speed: 当前设备速度
+* @param  length: 指向数据长度变量的指针
+* @retval 指向描述符缓冲区的指针
 */
 uint8_t *  USBD_FS_DeviceDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -240,11 +215,10 @@ uint8_t *  USBD_FS_DeviceDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 }
 
 /**
-* @brief  USBD_FS_LangIDStrDescriptor 
-*         return the LangID string descriptor
-* @param  speed : current device speed
-* @param  length : pointer to data length variable
-* @retval pointer to descriptor buffer
+* @brief  返回语言ID字符串描述符
+* @param  speed: 当前设备速度
+* @param  length: 指向数据长度变量的指针
+* @retval 指向描述符缓冲区的指针
 */
 uint8_t *  USBD_FS_LangIDStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -253,11 +227,10 @@ uint8_t *  USBD_FS_LangIDStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *leng
 }
 
 /**
-* @brief  USBD_FS_ProductStrDescriptor 
-*         return the product string descriptor
-* @param  speed : current device speed
-* @param  length : pointer to data length variable
-* @retval pointer to descriptor buffer
+* @brief  返回产品字符串描述符
+* @param  speed: 当前设备速度
+* @param  length: 指向数据长度变量的指针
+* @retval 指向描述符缓冲区的指针
 */
 uint8_t *  USBD_FS_ProductStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -273,11 +246,10 @@ uint8_t *  USBD_FS_ProductStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *len
 }
 
 /**
-* @brief  USBD_FS_ManufacturerStrDescriptor 
-*         return the manufacturer string descriptor
-* @param  speed : current device speed
-* @param  length : pointer to data length variable
-* @retval pointer to descriptor buffer
+* @brief  返回制造商字符串描述符
+* @param  speed: 当前设备速度
+* @param  length: 指向数据长度变量的指针
+* @retval 指向描述符缓冲区的指针
 */
 uint8_t *  USBD_FS_ManufacturerStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -286,11 +258,10 @@ uint8_t *  USBD_FS_ManufacturerStrDescriptor( USBD_SpeedTypeDef speed , uint16_t
 }
 
 /**
-* @brief  USBD_FS_SerialStrDescriptor 
-*         return the serial number string descriptor
-* @param  speed : current device speed
-* @param  length : pointer to data length variable
-* @retval pointer to descriptor buffer
+* @brief  返回序列号字符串描述符
+* @param  speed: 当前设备速度
+* @param  length: 指向数据长度变量的指针
+* @retval 指向描述符缓冲区的指针
 */
 uint8_t *  USBD_FS_SerialStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -306,11 +277,10 @@ uint8_t *  USBD_FS_SerialStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *leng
 }
 
 /**
-* @brief  USBD_FS_ConfigStrDescriptor 
-*         return the configuration string descriptor
-* @param  speed : current device speed
-* @param  length : pointer to data length variable
-* @retval pointer to descriptor buffer
+* @brief  返回配置字符串描述符
+* @param  speed: 当前设备速度
+* @param  length: 指向数据长度变量的指针
+* @retval 指向描述符缓冲区的指针
 */
 uint8_t *  USBD_FS_ConfigStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -326,11 +296,10 @@ uint8_t *  USBD_FS_ConfigStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *leng
 }
 
 /**
-* @brief  USBD_HS_InterfaceStrDescriptor 
-*         return the interface string descriptor
-* @param  speed : current device speed
-* @param  length : pointer to data length variable
-* @retval pointer to descriptor buffer
+* @brief  返回接口字符串描述符
+* @param  speed: 当前设备速度
+* @param  length: 指向数据长度变量的指针
+* @retval 指向描述符缓冲区的指针
 */
 uint8_t *  USBD_FS_InterfaceStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -346,11 +315,10 @@ uint8_t *  USBD_FS_InterfaceStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *l
 }
 #if (USBD_LPM_ENABLED == 1)
 /**
-  * @brief  USBD_FS_USR_BOSDescriptor 
-  *         return the BOS descriptor
-  * @param  speed : current device speed
-  * @param  length : pointer to data length variable
-  * @retval pointer to descriptor buffer
+  * @brief  返回BOS描述符
+  * @param  speed: 当前设备速度
+  * @param  length: 指向数据长度变量的指针
+  * @retval 指向描述符缓冲区的指针
   */
 uint8_t *USBD_FS_USR_BOSDescriptor(USBD_SpeedTypeDef speed , uint16_t *length)
 {
@@ -370,4 +338,3 @@ uint8_t *USBD_FS_USR_BOSDescriptor(USBD_SpeedTypeDef speed , uint16_t *length)
   * @}
   */ 
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

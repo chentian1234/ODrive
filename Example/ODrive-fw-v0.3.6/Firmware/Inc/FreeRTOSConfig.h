@@ -1,167 +1,120 @@
 /*
-    FreeRTOS V9.0.0 - Copyright (C) 2016 Real Time Engineers Ltd.
-    All rights reserved
-
-    VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
-
-    This file is part of the FreeRTOS distribution.
-
-    FreeRTOS is free software; you can redistribute it and/or modify it under
-    the terms of the GNU General Public License (version 2) as published by the
-    Free Software Foundation >>!AND MODIFIED BY!<< the FreeRTOS exception.
-
-	***************************************************************************
-    >>!   NOTE: The modification to the GPL is included to allow you to     !<<
-    >>!   distribute a combined work that includes FreeRTOS without being   !<<
-    >>!   obliged to provide the source code for proprietary components     !<<
-    >>!   outside of the FreeRTOS kernel.                                   !<<
-	***************************************************************************
-
-    FreeRTOS is distributed in the hope that it will be useful, but WITHOUT ANY
-    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-    FOR A PARTICULAR PURPOSE.  Full license text is available on the following
-    link: http://www.freertos.org/a00114.html
-
-    ***************************************************************************
-     *                                                                       *
-     *    FreeRTOS provides completely free yet professionally developed,    *
-     *    robust, strictly quality controlled, supported, and cross          *
-     *    platform software that is more than just the market leader, it     *
-     *    is the industry's de facto standard.                               *
-     *                                                                       *
-     *    Help yourself get started quickly while simultaneously helping     *
-     *    to support the FreeRTOS project by purchasing a FreeRTOS           *
-     *    tutorial book, reference manual, or both:                          *
-     *    http://www.FreeRTOS.org/Documentation                              *
-     *                                                                       *
-    ***************************************************************************
-
-    http://www.FreeRTOS.org/FAQHelp.html - Having a problem?  Start by reading
-	the FAQ page "My application does not run, what could be wrong?".  Have you
-	defined configASSERT()?
-
-	http://www.FreeRTOS.org/support - In return for receiving this top quality
-	embedded software for free we request you assist our global community by
-	participating in the support forum.
-
-	http://www.FreeRTOS.org/training - Investing in training allows your team to
-	be as productive as possible as early as possible.  Now you can receive
-	FreeRTOS training directly from Richard Barry, CEO of Real Time Engineers
-	Ltd, and the world's leading authority on the world's leading RTOS.
-
-    http://www.FreeRTOS.org/plus - A selection of FreeRTOS ecosystem products,
-    including FreeRTOS+Trace - an indispensable productivity tool, a DOS
-    compatible FAT file system, and our tiny thread aware UDP/IP stack.
-
-    http://www.FreeRTOS.org/labs - Where new FreeRTOS products go to incubate.
-    Come and try FreeRTOS+TCP, our new open source TCP/IP stack for FreeRTOS.
-
-    http://www.OpenRTOS.com - Real Time Engineers ltd. license FreeRTOS to High
-    Integrity Systems ltd. to sell under the OpenRTOS brand.  Low cost OpenRTOS
-    licenses offer ticketed support, indemnification and commercial middleware.
-
-    http://www.SafeRTOS.com - High Integrity Systems also provide a safety
-    engineered and independently SIL3 certified version for use in safety and
-    mission critical applications that require provable dependability.
-
-    1 tab == 4 spaces!
-*/
+ * ============================================================================
+ * 文件名: FreeRTOSConfig.h
+ *
+ * 文件用途:
+ *   本文件是FreeRTOS实时操作系统的配置文件，定义所有RTOS核心参数。
+ *   包括：
+ *     - 调度器配置（抢占式/时间片、CPU时钟、Tick频率）
+ *     - 内存配置（总堆大小15KB、最小栈128字、最大优先级7）
+ *     - 中断配置（最低优先级15、最大系统调用优先级5）
+ *     - API功能开关（任务删除、挂起、延时等）
+ *     - 中断处理函数映射（SVC_Handler、PendSV_Handler等）
+ *
+ * 重要参数：
+ *     configCPU_CLOCK_HZ:   168MHz (STM32F407系统时钟)
+ *     configTICK_RATE_HZ:   1000Hz (1ms Tick周期)
+ *     configTOTAL_HEAP_SIZE: 15360字节 (RTOS动态分配总内存)
+ *     configMAX_PRIORITIES:  7个优先级 (Idle~High+1)
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
 /*-----------------------------------------------------------
- * Application specific definitions.
+ * 应用程序特定定义
  *
- * These definitions should be adjusted for your particular hardware and
- * application requirements.
- *
- * THESE PARAMETERS ARE DESCRIBED WITHIN THE 'CONFIGURATION' SECTION OF THE
- * FreeRTOS API DOCUMENTATION AVAILABLE ON THE FreeRTOS.org WEB SITE.
- *
- * See http://www.freertos.org/a00110.html.
+ * 这些定义应根据具体硬件和应用需求进行调整。
  *----------------------------------------------------------*/
 
 /* USER CODE BEGIN Includes */   	      
-/* Section where include file can be added */
+/* 可在本区域添加额外的头文件包含 */
 /* USER CODE END Includes */ 
 
-/* Ensure stdint is only used by the compiler, and not the assembler. */
+/* 确保stdint只在编译器中使用，汇编器不使用 */
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
     #include <stdint.h>
     #include "main.h" 
     extern uint32_t SystemCoreClock;
 #endif
 
-#define configUSE_PREEMPTION                     1
-#define configSUPPORT_STATIC_ALLOCATION          0
-#define configSUPPORT_DYNAMIC_ALLOCATION         1
-#define configUSE_IDLE_HOOK                      0
-#define configUSE_TICK_HOOK                      0
-#define configCPU_CLOCK_HZ                       ( SystemCoreClock )
-#define configTICK_RATE_HZ                       ((TickType_t)1000)
-#define configMAX_PRIORITIES                     ( 7 )
-#define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
-#define configTOTAL_HEAP_SIZE                    ((size_t)15360)
-#define configMAX_TASK_NAME_LEN                  ( 16 )
-#define configUSE_16_BIT_TICKS                   0
-#define configUSE_MUTEXES                        1
-#define configQUEUE_REGISTRY_SIZE                8
-#define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
+/* ============================================================================
+ * 调度器配置
+ * ============================================================================ */
+#define configUSE_PREEMPTION                     1   /* 使用抢占式调度器 */
+#define configSUPPORT_STATIC_ALLOCATION          0   /* 不支持静态内存分配 */
+#define configSUPPORT_DYNAMIC_ALLOCATION         1   /* 支持动态内存分配 */
+#define configUSE_IDLE_HOOK                      0   /* 不使用空闲任务钩子 */
+#define configUSE_TICK_HOOK                      0   /* 不使用Tick钩子 */
+#define configCPU_CLOCK_HZ                       ( SystemCoreClock )  /* CPU时钟: 168MHz */
+#define configTICK_RATE_HZ                       ((TickType_t)1000)   /* Tick频率: 1000Hz (1ms) */
+#define configMAX_PRIORITIES                     ( 7 )                /* 最大优先级数: 0~6 */
+#define configMINIMAL_STACK_SIZE                 ((uint16_t)128)      /* 最小栈大小: 128字(512字节) */
+#define configTOTAL_HEAP_SIZE                    ((size_t)15360)      /* 总堆大小: 15KB */
+#define configMAX_TASK_NAME_LEN                  ( 16 )               /* 任务名最大长度 */
+#define configUSE_16_BIT_TICKS                   0   /* 使用32位Tick计数器 */
+#define configUSE_MUTEXES                        1   /* 启用互斥量 */
+#define configQUEUE_REGISTRY_SIZE                8   /* 队列注册表大小(用于调试) */
+#define configUSE_PORT_OPTIMISED_TASK_SELECTION  1   /* 使用硬件优化的任务选择 */
 
-/* Co-routine definitions. */
+/* 协程配置（本系统不使用协程）*/
 #define configUSE_CO_ROUTINES                    0
 #define configMAX_CO_ROUTINE_PRIORITIES          ( 2 )
 
-/* Set the following definitions to 1 to include the API function, or zero
-to exclude the API function. */
-#define INCLUDE_vTaskPrioritySet            1
-#define INCLUDE_uxTaskPriorityGet           1
-#define INCLUDE_vTaskDelete                 1
-#define INCLUDE_vTaskCleanUpResources       0
-#define INCLUDE_vTaskSuspend                1
-#define INCLUDE_vTaskDelayUntil             1
-#define INCLUDE_vTaskDelay                  1
-#define INCLUDE_xTaskGetSchedulerState      1
+/* ============================================================================
+ * API功能开关 - 设为1启用对应API函数，设为0则排除
+ * ============================================================================ */
+#define INCLUDE_vTaskPrioritySet            1   /* 启用: 设置任务优先级 */
+#define INCLUDE_uxTaskPriorityGet           1   /* 启用: 获取任务优先级 */
+#define INCLUDE_vTaskDelete                 1   /* 启用: 删除任务 */
+#define INCLUDE_vTaskCleanUpResources       0   /* 禁用: 清理任务资源(不需要) */
+#define INCLUDE_vTaskSuspend                1   /* 启用: 挂起任务 */
+#define INCLUDE_vTaskDelayUntil             1   /* 启用: 精确延时 */
+#define INCLUDE_vTaskDelay                  1   /* 启用: 相对延时 */
+#define INCLUDE_xTaskGetSchedulerState      1   /* 启用: 获取调度器状态 */
 
-/* Cortex-M specific definitions. */
+/* ============================================================================
+ * Cortex-M4 中断优先级配置
+ * ============================================================================ */
+/* Cortex-M使用4位优先级，共16级(0~15)，0为最高 */
 #ifdef __NVIC_PRIO_BITS
- /* __BVIC_PRIO_BITS will be specified when CMSIS is being used. */
+ /* __BVIC_PRIO_BITS 将在使用CMSIS时定义 */
  #define configPRIO_BITS         __NVIC_PRIO_BITS
 #else
- #define configPRIO_BITS         4
+ #define configPRIO_BITS         4    /* STM32F4使用4位优先级 */
 #endif
 
-/* The lowest interrupt priority that can be used in a call to a "set priority"
-function. */
+/* 可使用的最低中断优先级 */
 #define configLIBRARY_LOWEST_INTERRUPT_PRIORITY   15
 
-/* The highest interrupt priority that can be used by any interrupt service
-routine that makes calls to interrupt safe FreeRTOS API functions.  DO NOT CALL
-INTERRUPT SAFE FREERTOS API FUNCTIONS FROM ANY INTERRUPT THAT HAS A HIGHER
-PRIORITY THAN THIS! (higher priorities are lower numeric values. */
+/* 可调用FreeRTOS安全API的最高中断优先级
+ * 注意：优先级数值越小，实际优先级越高！
+ * 优先级高于此值的中断不能调用FreeRTOS的ISR安全API */
 #define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 5
 
-/* Interrupt priorities used by the kernel port layer itself.  These are generic
-to all Cortex-M ports, and do not rely on any particular library functions. */
+/* 内核端口的中断优先级 */
 #define configKERNEL_INTERRUPT_PRIORITY 		( configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
-/* !!!! configMAX_SYSCALL_INTERRUPT_PRIORITY must not be set to zero !!!!
-See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
+/* !!!! configMAX_SYSCALL_INTERRUPT_PRIORITY 绝不能设为零 !!!!
+ * 详见 http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html */
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY 	( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
 
-/* Normal assert() semantics without relying on the provision of an assert.h
-header file. */
+/* 断言宏：如果条件为假，则关闭所有中断并进入死循环 */
 /* USER CODE BEGIN 1 */   
 #define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );} 
 /* USER CODE END 1 */
 
-/* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
-standard names. */
-#define vPortSVCHandler    SVC_Handler
-#define xPortPendSVHandler PendSV_Handler
+/* ============================================================================
+ * FreeRTOS端口中断处理函数与CMSIS标准名称的映射
+ * ============================================================================ */
+#define vPortSVCHandler    SVC_Handler      /* SVC异常处理 */
+#define xPortPendSVHandler PendSV_Handler   /* PendSV异常处理 */
 
-/* IMPORTANT: This define MUST be commented when used with STM32Cube firmware, 
-              to prevent overwriting SysTick_Handler defined within STM32Cube HAL */
+/* 重要：使用STM32Cube固件时，必须注释掉以下定义，
+ * 否则会覆盖STM32Cube HAL中定义的SysTick_Handler */
 /* #define xPortSysTickHandler SysTick_Handler */
 
 /* USER CODE BEGIN Defines */   	      

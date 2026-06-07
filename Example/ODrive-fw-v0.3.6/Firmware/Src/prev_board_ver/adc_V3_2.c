@@ -3,13 +3,13 @@ ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 ADC_HandleTypeDef hadc3;
 
-/* ADC1 init function */
+/* ADC1初始化函数 */
 void MX_ADC1_Init(void)
 {
   ADC_ChannelConfTypeDef sConfig;
   ADC_InjectionConfTypeDef sConfigInjected;
 
-    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
+    /**配置ADC的全局特性（时钟、分辨率、数据对齐和转换次数）
     */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
@@ -28,7 +28,7 @@ void MX_ADC1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+    /**配置所选ADC常规通道的序列器rank和采样时间
     */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
@@ -38,7 +38,7 @@ void MX_ADC1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time 
+    /**配置所选ADC注入通道的序列器rank和采样时间
     */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_0;
   sConfigInjected.InjectedRank = 1;
@@ -55,7 +55,7 @@ void MX_ADC1_Init(void)
   }
 
 }
-/* ADC2 init function */
+/* ADC2初始化函数 */
 void MX_ADC2_Init(void)
 {
   ADC_ChannelConfTypeDef sConfig;
@@ -80,7 +80,7 @@ void MX_ADC2_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+    /**配置所选ADC常规通道的序列器rank和采样时间
     */
   sConfig.Channel = ADC_CHANNEL_13;
   sConfig.Rank = 1;
@@ -90,7 +90,7 @@ void MX_ADC2_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time 
+    /**配置所选ADC注入通道的序列器rank和采样时间
     */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_10;
   sConfigInjected.InjectedRank = 1;

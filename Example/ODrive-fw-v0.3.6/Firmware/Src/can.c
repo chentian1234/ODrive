@@ -1,51 +1,25 @@
-/**
-  ******************************************************************************
-  * File Name          : CAN.c
-  * Description        : This file provides code for the configuration
-  *                      of the CAN instances.
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+/*
+ * ============================================================================
+ * 文件名: can.c
+ *
+ * 文件用途:
+ *   本文件实现STM32F4 CAN通信外设的驱动层，用于电机控制器与上位机或其他
+ *   CAN节点之间的数据交换。
+ *
+ * 主要功能模块：
+ *   1. CAN1初始化：波特率配置、工作模式设置（CAN_NORMAL正常模式）
+ *   2. MSP层初始化/去初始化：PB8(RX)/PB9(TX)引脚复用配置
+ *
+ * 通信参数:
+ *   - 波特率预分频器: 16
+ *   - 总线时序: SJW=1TQ, BS1=1TQ, BS2=1TQ
+ *   - 工作模式: 正常模式（支持收发）
+ *   - ABOM(自动总线离线管理): 禁用，需软件手动恢复
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "can.h"
@@ -58,7 +32,21 @@
 
 CAN_HandleTypeDef hcan1;
 
-/* CAN1 init function */
+/**
+ * @brief CAN1 初始化函数
+ * 
+ * 功能说明：
+ * 配置CAN1外设用于电机控制器与上位机或其他设备的通信。
+ * 波特率配置：
+ *   - 时钟预分频器: 16
+ *   - SJW(同步跳跃宽度): 1TQ
+ *   - BS1(时间段1): 1TQ
+ *   - BS2(时间段2): 1TQ
+ *   - 工作模式: CAN_NORMAL(正常模式，支持发送和接收)
+ * 
+ * 注意：当前配置中ABOM(自动总线离线管理)被禁用，
+ * 这意味着如果CAN总线出现错误，需要软件手动恢复。
+ */
 void MX_CAN1_Init(void)
 {
 
@@ -81,6 +69,20 @@ void MX_CAN1_Init(void)
 
 }
 
+/**
+ * @brief CAN外设底层初始化回调函数（由HAL库自动调用）
+ * 
+ * 功能说明：
+ * 当调用HAL_CAN_Init()时，HAL库会自动调用此函数来配置CAN的底层硬件资源。
+ * 
+ * GPIO配置：
+ * - PB8: CAN1_RX (接收引脚)
+ * - PB9: CAN1_TX (发送引脚)
+ * - 复用功能: GPIO_AF9_CAN1
+ * - 速度: GPIO_SPEED_FREQ_VERY_HIGH (高速，适用于CAN通信)
+ * 
+ * @param canHandle: CAN句柄指针，指向要初始化的CAN实例
+ */
 void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
 {
 
@@ -90,10 +92,10 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
   /* USER CODE BEGIN CAN1_MspInit 0 */
 
   /* USER CODE END CAN1_MspInit 0 */
-    /* CAN1 clock enable */
+    /* 使能CAN1时钟 */
     __HAL_RCC_CAN1_CLK_ENABLE();
   
-    /**CAN1 GPIO Configuration    
+    /**CAN1 GPIO配置    
     PB8     ------> CAN1_RX
     PB9     ------> CAN1_TX 
     */
@@ -110,6 +112,15 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
   }
 }
 
+/**
+ * @brief CAN外设底层去初始化回调函数（由HAL库自动调用）
+ * 
+ * 功能说明：
+ * 当调用HAL_CAN_DeInit()时，HAL库会自动调用此函数来释放CAN的底层硬件资源。
+ * 包括禁用CAN时钟、复位GPIO引脚配置等。
+ * 
+ * @param canHandle: CAN句柄指针，指向要去初始化的CAN实例
+ */
 void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 {
 
@@ -118,10 +129,10 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
   /* USER CODE BEGIN CAN1_MspDeInit 0 */
 
   /* USER CODE END CAN1_MspDeInit 0 */
-    /* Peripheral clock disable */
+    /* 禁用CAN1外设时钟 */
     __HAL_RCC_CAN1_CLK_DISABLE();
   
-    /**CAN1 GPIO Configuration    
+    /**CAN1 GPIO配置    
     PB8     ------> CAN1_RX
     PB9     ------> CAN1_TX 
     */
@@ -145,4 +156,3 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

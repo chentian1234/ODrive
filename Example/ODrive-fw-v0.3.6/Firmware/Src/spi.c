@@ -1,51 +1,25 @@
-/**
-  ******************************************************************************
-  * File Name          : SPI.c
-  * Description        : This file provides code for the configuration
-  *                      of the SPI instances.
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+/*
+ * ============================================================================
+ * 文件名: spi.c
+ *
+ * 文件用途:
+ *   本文件实现STM32F4 SPI3外设的驱动配置，用于与SPI编码器通信。
+ *
+ * 主要功能模块：
+ *   1. SPI3初始化：主模式、16位数据宽度、时钟极性/相位配置
+ *   2. MSP层初始化/去初始化：PC10(SCK)/PC11(MISO)/PC12(MOSI)引脚配置
+ *
+ * 通信参数:
+ *   - 工作模式: SPI主模式
+ *   - 数据宽度: 16位（适用于SPI编码器）
+ *   - 时钟极性: 空闲低电平
+ *   - 时钟相位: 第二个时钟沿采样
+ *   - 波特率预分频: 16分频
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "spi.h"
@@ -58,7 +32,24 @@
 
 SPI_HandleTypeDef hspi3;
 
-/* SPI3 init function */
+/**
+ * @brief SPI3 初始化函数
+ * 
+ * 功能说明：
+ * 配置SPI3外设用于与外部设备通信（如SPI编码器等）。
+ * 
+ * 主要配置参数：
+ * - 工作模式: SPI_MODE_MASTER (主模式)
+ * - 数据线: SPI_DIRECTION_2LINES (双线全双工)
+ * - 数据宽度: SPI_DATASIZE_16BIT (16位数据)
+ * - 时钟极性: SPI_POLARITY_LOW (空闲时低电平)
+ * - 时钟相位: SPI_PHASE_2EDGE (第二个时钟沿采样)
+ * - NSS: SPI_NSS_SOFT (软件管理片选)
+ * - 波特率预分频: SPI_BAUDRATEPRESCALER_16 (16分频)
+ * - 数据传输顺序: SPI_FIRSTBIT_MSB (高位在前)
+ * 
+ * 注意：使用16位数据宽度，适用于某些需要16位数据格式的SPI编码器
+ */
 void MX_SPI3_Init(void)
 {
 
@@ -81,6 +72,21 @@ void MX_SPI3_Init(void)
 
 }
 
+/**
+ * @brief SPI外设底层初始化回调函数（由HAL库自动调用）
+ * 
+ * 功能说明：
+ * 当调用HAL_SPI_Init()时，HAL库会自动调用此函数来配置SPI的底层硬件资源。
+ * 
+ * GPIO配置：
+ * - PC10: SPI3_SCK (时钟信号)
+ * - PC11: SPI3_MISO (主入从出)
+ * - PC12: SPI3_MOSI (主出从入)
+ * - 复用功能: GPIO_AF6_SPI3
+ * - 速度: GPIO_SPEED_FREQ_VERY_HIGH (高速)
+ * 
+ * @param spiHandle: SPI句柄指针，指向要初始化的SPI实例
+ */
 void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
 {
 
@@ -90,10 +96,10 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE BEGIN SPI3_MspInit 0 */
 
   /* USER CODE END SPI3_MspInit 0 */
-    /* SPI3 clock enable */
+    /* 使能SPI3时钟 */
     __HAL_RCC_SPI3_CLK_ENABLE();
   
-    /**SPI3 GPIO Configuration    
+    /**SPI3 GPIO配置    
     PC10     ------> SPI3_SCK
     PC11     ------> SPI3_MISO
     PC12     ------> SPI3_MOSI 
@@ -111,6 +117,15 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   }
 }
 
+/**
+ * @brief SPI外设底层去初始化回调函数（由HAL库自动调用）
+ * 
+ * 功能说明：
+ * 当调用HAL_SPI_DeInit()时，HAL库会自动调用此函数来释放SPI的底层硬件资源。
+ * 包括禁用SPI时钟、复位GPIO引脚配置等。
+ * 
+ * @param spiHandle: SPI句柄指针，指向要去初始化的SPI实例
+ */
 void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 {
 
@@ -119,10 +134,10 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE BEGIN SPI3_MspDeInit 0 */
 
   /* USER CODE END SPI3_MspDeInit 0 */
-    /* Peripheral clock disable */
+    /* 禁用SPI3外设时钟 */
     __HAL_RCC_SPI3_CLK_DISABLE();
   
-    /**SPI3 GPIO Configuration    
+    /**SPI3 GPIO配置    
     PC10     ------> SPI3_SCK
     PC11     ------> SPI3_MISO
     PC12     ------> SPI3_MOSI 
@@ -147,4 +162,3 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

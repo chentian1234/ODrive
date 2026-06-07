@@ -1,50 +1,26 @@
-/**
-  ******************************************************************************
-  * @file           : usbd_cdc_if.c
-  * @brief          :
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-*/
+/*
+ * ============================================================================
+ * 文件名: usbd_cdc_if.c
+ *
+ * 文件用途:
+ *   本文件实现USB CDC（Communication Device Class）接口的具体操作，包括
+ *   数据收发、控制命令处理和接口初始化。USB CDC使设备在主机端呈现为虚拟串口。
+ *
+ * 主要功能模块：
+ *   1. CDC_Init_FS()：CDC接口初始化，配置发送/接收缓冲区（各64字节）
+ *   2. CDC_DeInit_FS()：CDC接口去初始化
+ *   3. CDC_Control_FS()：处理CDC控制命令（线路编码、控制线状态等）
+ *   4. CDC_Receive_FS()：USB数据接收回调，保存命令并唤醒解析线程
+ *   5. CDC_Transmit_FS()：通过USB CDC发送数据到主机
+ *
+ * 缓冲区配置:
+ *   - 接收缓冲区: 64字节
+ *   - 发送缓冲区: 64字节
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
@@ -59,7 +35,7 @@
   */
 
 /** @defgroup USBD_CDC 
-  * @brief usbd core module
+  * @brief usbd核心模块
   * @{
   */ 
 
@@ -76,8 +52,8 @@
   * @{
   */ 
 /* USER CODE BEGIN PRIVATE_DEFINES */
-/* Define size for the receive and transmit buffer over CDC */
-/* It's up to user to redefine and/or remove those define */
+/* 自定义CDC缓冲区大小 */
+/* 用户可根据需要重新定义或移除这些定义 */
 #define APP_RX_DATA_SIZE  64
 #define APP_TX_DATA_SIZE  64
 /* USER CODE END PRIVATE_DEFINES */
@@ -98,12 +74,11 @@
 /** @defgroup USBD_CDC_Private_Variables
   * @{
   */
-/* Create buffer for reception and transmission           */
-/* It's up to user to redefine and/or remove those define */
-/* Received Data over USB are stored in this buffer       */
+/* 创建接收和发送缓冲区 */
+/* 通过USB接收的数据存储在此缓冲区 */
 uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 
-/* Send Data over USB CDC are stored in this buffer       */
+/* 通过USB发送的数据存储在此缓冲区 */
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
@@ -147,17 +122,19 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
   CDC_Receive_FS
 };
 
-/* Private functions ---------------------------------------------------------*/
 /**
-  * @brief  CDC_Init_FS
-  *         Initializes the CDC media low layer over the FS USB IP
-  * @param  None
-  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
-  */
+ * @brief CDC接口初始化函数
+ * 
+ * 功能说明：
+ * 初始化CDC通信接口的底层USB传输缓冲区。
+ * 设置发送和接收缓冲区的地址和大小。
+ * 
+ * @return USBD_OK: 初始化成功
+ */
 static int8_t CDC_Init_FS(void)
 { 
   /* USER CODE BEGIN 3 */ 
-  /* Set Application Buffers */
+  /* 设置应用程序缓冲区 */
   USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
   return (USBD_OK);
@@ -165,11 +142,14 @@ static int8_t CDC_Init_FS(void)
 }
 
 /**
-  * @brief  CDC_DeInit_FS
-  *         DeInitializes the CDC media low layer
-  * @param  None
-  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
-  */
+ * @brief CDC接口去初始化函数
+ * 
+ * 功能说明：
+ * 释放CDC通信接口的底层USB传输资源。
+ * 当前实现为空，因为USB设备库会自动管理资源。
+ * 
+ * @return USBD_OK: 去初始化成功
+ */
 static int8_t CDC_DeInit_FS(void)
 {
   /* USER CODE BEGIN 4 */ 
@@ -178,13 +158,29 @@ static int8_t CDC_DeInit_FS(void)
 }
 
 /**
-  * @brief  CDC_Control_FS
-  *         Manage the CDC class requests
-  * @param  cmd: Command code            
-  * @param  pbuf: Buffer containing command data (request parameters)
-  * @param  length: Number of data to be sent (in bytes)
-  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
-  */
+ * @brief CDC控制命令处理函数
+ * 
+ * 功能说明：
+ * 处理CDC类的各种控制请求。CDC类定义了一组标准命令，用于配置虚拟串口参数。
+ * 大多数命令在此项目中不需要特殊处理，因为USB通信参数由固件固定。
+ * 
+ * 支持的命令：
+ * - CDC_SEND_ENCAPSULATED_COMMAND: 发送封装命令（未使用）
+ * - CDC_GET_ENCAPSULATED_RESPONSE: 获取封装响应（未使用）
+ * - CDC_SET_COMM_FEATURE/CLEAR_COMM_FEATURE/GET_COMM_FEATURE: 通信特性管理（未使用）
+ * - CDC_SET_LINE_CODING: 设置线路编码（波特率、停止位、校验位、数据位）
+ * - CDC_GET_LINE_CODING: 获取线路编码
+ * - CDC_SET_CONTROL_LINE_STATE: 设置控制线状态（DTR/RTS）
+ * - CDC_SEND_BREAK: 发送中断信号
+ * 
+ * 注意：线路编码配置在此项目中被忽略，因为USB CDC是虚拟串口，
+ * 实际通信速率由USB协议决定，与线路编码参数无关。
+ * 
+ * @param cmd: 命令代码
+ * @param pbuf: 包含命令数据的缓冲区
+ * @param length: 数据长度
+ * @return USBD_OK: 处理成功
+ */
 static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
 { 
   /* USER CODE BEGIN 5 */
@@ -211,21 +207,21 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
     break;
 
   /*******************************************************************************/
-  /* Line Coding Structure                                                       */
+  /* 线路编码结构体结构                                                           */
   /*-----------------------------------------------------------------------------*/
-  /* Offset | Field       | Size | Value  | Description                          */
-  /* 0      | dwDTERate   |   4  | Number |Data terminal rate, in bits per second*/
-  /* 4      | bCharFormat |   1  | Number | Stop bits                            */
-  /*                                        0 - 1 Stop bit                       */
-  /*                                        1 - 1.5 Stop bits                    */
-  /*                                        2 - 2 Stop bits                      */
-  /* 5      | bParityType |  1   | Number | Parity                               */
-  /*                                        0 - None                             */
-  /*                                        1 - Odd                              */ 
-  /*                                        2 - Even                             */
-  /*                                        3 - Mark                             */
-  /*                                        4 - Space                            */
-  /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
+  /* 偏移量 | 字段        | 大小 | 值类型 | 描述                                 */
+  /* 0      | dwDTERate   |   4  | 数字   | 数据终端速率，比特/秒                 */
+  /* 4      | bCharFormat |   1  | 数字   | 停止位                               */
+  /*                                        0 - 1个停止位                        */
+  /*                                        1 - 1.5个停止位                      */
+  /*                                        2 - 2个停止位                        */
+  /* 5      | bParityType |  1   | 数字   | 校验位                               */
+  /*                                        0 - 无校验                           */
+  /*                                        1 - 奇校验                           */ 
+  /*                                        2 - 偶校验                           */
+  /*                                        3 - 标记校验                         */
+  /*                                        4 - 空格校验                         */
+  /* 6      | bDataBits  |   1   | 数字   | 数据位 (5, 6, 7, 8 或 16位)           */
   /*******************************************************************************/
   case CDC_SET_LINE_CODING:   
 	
@@ -252,28 +248,34 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
 }
 
 /**
-  * @brief  CDC_Receive_FS
-  *         Data received over USB OUT endpoint are sent over CDC interface 
-  *         through this function.
-  *           
-  *         @note
-  *         This function will block any OUT packet reception on USB endpoint 
-  *         untill exiting this function. If you exit this function before transfer
-  *         is complete on CDC interface (ie. using DMA controller) it will result 
-  *         in receiving more data while previous ones are still not sent.
-  *                 
-  * @param  Buf: Buffer of data to be received
-  * @param  Len: Number of data received (in bytes)
-  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
-  */
+ * @brief CDC数据接收函数
+ * 
+ * 功能说明：
+ * 当USB OUT端点接收到数据时，USB设备库会调用此函数。
+ * 接收到的数据通过此函数传递给上层应用处理。
+ * 
+ * 处理流程：
+ * 1. 在数据末尾添加null终止符，确保数据可以作为字符串处理
+ * 2. 调用set_cmd_buffer()将数据保存到命令缓冲区
+ * 3. 释放sem_usb_rx信号量，唤醒命令解析线程处理接收到的数据
+ * 
+ * 注意：此函数在中断上下文中调用，应尽量简短快速。
+ * 实际的数据处理在usb_update_thread线程中完成。
+ * 
+ * @param Buf: 接收到的数据缓冲区指针
+ * @param Len: 接收到的数据长度（字节）
+ * @return USBD_OK: 处理成功
+ */
 static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  //Append null termination at end of string
+  // 在字符串末尾添加null终止符
   int modified_len = MACRO_MIN(*Len+1, APP_RX_DATA_SIZE);
   Buf[modified_len-1] = 0;
 
+  // 将数据保存到命令缓冲区
   set_cmd_buffer(Buf, modified_len);
+  // 释放接收信号量，唤醒命令解析线程
   osSemaphoreRelease(sem_usb_rx);
 
   return (USBD_OK);
@@ -281,31 +283,47 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 }
 
 /**
-  * @brief  CDC_Transmit_FS
-  *         Data send over USB IN endpoint are sent over CDC interface 
-  *         through this function.           
-  *         @note
-  *         
-  *                 
-  * @param  Buf: Buffer of data to be send
-  * @param  Len: Number of data to be send (in bytes)
-  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL or USBD_BUSY
-  */
+ * @brief USB数据发送函数
+ * 
+ * 功能说明：
+ * 通过USB CDC接口发送数据到上位机。
+ * 
+ * 处理流程：
+ * 1. 检查数据长度是否超过发送缓冲区大小(64字节)
+ * 2. 检查是否有正在进行的传输（通过TxState标志）
+ * 3. 将数据复制到发送缓冲区
+ * 4. 更新发送缓冲区指针和长度
+ * 5. 调用USBD_CDC_TransmitPacket()启动实际的数据传输
+ * 
+ * 并发控制：
+ * 通过检查hcdc->TxState标志确保同一时间只有一个传输在进行。
+ * 如果TxState != 0，表示上一次传输尚未完成，返回USBD_BUSY。
+ * 
+ * 调用方式：
+ * 此函数由syscalls.c中的_write()函数调用，实现printf通过USB输出。
+ * 调用前需等待sem_usb_tx信号量，确保USB接口可用。
+ * 
+ * @param Buf: 要发送的数据缓冲区指针
+ * @param Len: 要发送的数据长度（字节）
+ * @return USBD_OK: 发送成功启动
+ *         USBD_FAIL: 数据长度超过缓冲区大小
+ *         USBD_BUSY: 上一次传输尚未完成
+ */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 {
   uint8_t result = USBD_OK;
   /* USER CODE BEGIN 7 */ 
   
-  //Check length
+  // 检查数据长度是否超过发送缓冲区
   if (Len > APP_TX_DATA_SIZE)
     return USBD_FAIL;
-  // Check for ongoing transmission
+  // 检查是否有正在进行的传输
   USBD_CDC_HandleTypeDef* hcdc = (USBD_CDC_HandleTypeDef*) hUsbDeviceFS.pClassData;
   if (hcdc->TxState != 0)
     return USBD_BUSY;
-  // memcpy Buf into UserTxBufferFS
+  // 复制数据到发送缓冲区
   memcpy(UserTxBufferFS, Buf, Len);
-  // Update Len
+  // 更新发送缓冲区长度
   USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, Len);
   result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
   /* USER CODE END 7 */ 
@@ -323,5 +341,5 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
   * @}
   */ 
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
 

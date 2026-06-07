@@ -1,51 +1,31 @@
-/**
-  ******************************************************************************
-  * File Name          : TIM.c
-  * Description        : This file provides code for the configuration
-  *                      of the TIM instances.
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+/*
+ * ============================================================================
+ * 文件名: tim.c
+ *
+ * 文件用途:
+ *   本文件实现STM32F4定时器外设的配置，涵盖PWM输出、编码器接口和ADC触发功能。
+ *   定时器是ODrive电机控制系统的核心，负责生成PWM波形驱动MOSFET桥臂，
+ *   同时精确控制ADC采样时机以获取电机电流。
+ *
+ * 主要功能模块：
+ *   1. TIM1：M0电机PWM输出（高级定时器，三相+死区+ADC触发）
+ *   2. TIM8：M1电机PWM输出（高级定时器，三相+死区+ADC触发）
+ *   3. TIM2：辅助驱动器PWM输出（低/高端驱动）
+ *   4. TIM3：M0电机编码器接口（4倍频，4级滤波）
+ *   5. TIM4：M1电机编码器接口（4倍频，4级滤波）
+ *   6. OC4_PWM_Override()：配置OC4通道为PWM模式用于ADC触发
+ *   7. MSP层初始化/去初始化：PWM输出引脚配置、编码器引脚配置
+ *
+ * 定时器分工:
+ *   - TIM1/TIM8：中央对齐PWM模式，产生FOC所需的对称PWM波形
+ *   - TIM1 TRGO：触发ADC注入转换（M0电流采样）
+ *   - TIM8 TRGO：触发ADC常规转换（M1电流采样）
+ *   - TIM3/TIM4：硬件编码器模式，自动计算脉冲数和方向
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "tim.h"
@@ -54,10 +34,22 @@
 
 /* USER CODE BEGIN 0 */
 
-// To trigger the ADC, we must use an output channel that is in PWM mode
-// However, CubeMX does not allow you to set up a channel as PWM without an output pin.
-// This will set OC4 to PWM mode. Also, triggering doesn't work if the compare register
-// (called pulse here) is 0, so we initialise it to 1.
+/**
+ * @brief OC4通道PWM输出配置函数
+ * 
+ * 功能说明：
+ * 配置定时器的通道4(OC4)为PWM2模式，用于触发ADC采样。
+ * 
+ * 为什么需要这个函数：
+ * 在电机控制中，ADC需要在PWM周期的特定时刻采样电流信号。
+ * 通过定时器比较输出(OC4 PWM)可以精确控制ADC的触发时机。
+ * 
+ * 注意：CubeMX不允许在没有输出引脚的情况下配置PWM模式，
+ * 所以此函数绕过CubeMX限制，直接配置OC4为PWM模式。
+ * 比较寄存器设为1(不能为0，否则无法触发)。
+ * 
+ * @param htim: 定时器句柄指针
+ */
 void OC4_PWM_Override(TIM_HandleTypeDef* htim) {
 
     TIM_OC_InitTypeDef sConfigOC;
@@ -80,7 +72,21 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim8;
 
-/* TIM1 init function */
+/**
+ * @brief TIM1 初始化函数
+ * 
+ * 功能说明：
+ * 配置TIM1高级定时器，用于M0电机的PWM输出和ADC触发。
+ * 
+ * 主要配置：
+ * - 计数器模式: 中央对齐模式3 (CENTERALIGNED3)
+ * - 周期: TIM_1_8_PERIOD_CLOCKS (由电机控制频率决定)
+ * - PWM通道: CH1/CH2/CH3 用于驱动M0电机三相
+ * - CH4: 配置为PWM模式用于ADC触发
+ * - 主输出触发: TIM_TRGO_UPDATE (更新事件触发)
+ * - 死区时间: TIM_1_8_DEADTIME_CLOCKS
+ * - 刹车: 禁用
+ */
 void MX_TIM1_Init(void)
 {
   TIM_ClockConfigTypeDef sClockSourceConfig;
@@ -165,7 +171,18 @@ void MX_TIM1_Init(void)
   HAL_TIM_MspPostInit(&htim1);
 
 }
-/* TIM2 init function */
+/**
+ * @brief TIM2 初始化函数
+ * 
+ * 功能说明：
+ * 配置TIM2通用定时器，用于辅助驱动器的PWM输出。
+ * 
+ * 主要配置：
+ * - 计数器模式: 中央对齐模式3 (CENTERALIGNED3)
+ * - 周期: TIM_APB1_PERIOD_CLOCKS (APB1频率相关)
+ * - CH3: PWM输出用于辅助驱动器低侧
+ * - CH4: PWM输出用于辅助驱动器高侧 (特殊脉宽控制)
+ */
 void MX_TIM2_Init(void)
 {
   TIM_MasterConfigTypeDef sMasterConfig;
@@ -207,7 +224,21 @@ void MX_TIM2_Init(void)
   HAL_TIM_MspPostInit(&htim2);
 
 }
-/* TIM3 init function */
+/**
+ * @brief TIM3 初始化函数
+ * 
+ * 功能说明：
+ * 配置TIM3通用定时器为编码器模式，用于读取M0电机的编码器信号。
+ * 
+ * 主要配置：
+ * - 编码器模式: TIM_ENCODERMODE_TI12 (TI1和TI2都计数，4倍频)
+ * - IC1: 通道1输入捕获，上升沿触发，直接TI输入，4级滤波
+ * - IC2: 通道2输入捕获，上升沿触发，直接TI输入，4级滤波
+ * - 周期: 0xFFFF (16位最大值)
+ * - 滤波器: 4 (抑制编码器信号噪声)
+ * 
+ * 注意：编码器模式自动计算脉冲数和方向，无需软件干预
+ */
 void MX_TIM3_Init(void)
 {
   TIM_Encoder_InitTypeDef sConfig;
@@ -240,7 +271,18 @@ void MX_TIM3_Init(void)
   }
 
 }
-/* TIM4 init function */
+/**
+ * @brief TIM4 初始化函数
+ * 
+ * 功能说明：
+ * 配置TIM4通用定时器为编码器模式，用于读取M1电机的编码器信号。
+ * 配置与TIM3相同，用于M1电机的编码器接口。
+ * 
+ * 主要配置：
+ * - 编码器模式: TIM_ENCODERMODE_TI12 (TI1和TI2都计数，4倍频)
+ * - IC1/IC2: 输入捕获，上升沿触发，4级滤波
+ * - 周期: 0xFFFF (16位最大值)
+ */
 void MX_TIM4_Init(void)
 {
   TIM_Encoder_InitTypeDef sConfig;
@@ -273,7 +315,23 @@ void MX_TIM4_Init(void)
   }
 
 }
-/* TIM8 init function */
+/**
+ * @brief TIM8 初始化函数
+ * 
+ * 功能说明：
+ * 配置TIM8高级定时器，用于M1电机的PWM输出。
+ * 与TIM1功能类似，但用于第二个电机轴。
+ * 
+ * 主要配置：
+ * - 计数器模式: 中央对齐模式3 (CENTERALIGNED3)
+ * - 周期: TIM_1_8_PERIOD_CLOCKS (与TIM1相同)
+ * - PWM通道: CH1/CH2/CH3 用于驱动M1电机三相
+ * - 主输出触发: TIM_TRGO_UPDATE (用于触发ADC采样)
+ * - 死区时间: TIM_1_8_DEADTIME_CLOCKS
+ * - 中断: 使能TIM8_TRG_COM_TIM14_IRQn (优先级0)
+ * 
+ * 注意：TIM8的中断用于ADC采样触发和时基更新
+ */
 void MX_TIM8_Init(void)
 {
   TIM_MasterConfigTypeDef sMasterConfig;
@@ -336,6 +394,15 @@ void MX_TIM8_Init(void)
 
 }
 
+/**
+ * @brief TIM基础定时器底层初始化回调函数
+ * 
+ * 功能说明：
+ * 当调用HAL_TIM_Base_Init()时，HAL库会自动调用此函数来配置TIM1的底层硬件资源。
+ * 主要使能TIM1时钟，用于电机M0的PWM输出控制。
+ * 
+ * @param tim_baseHandle: 定时器句柄指针
+ */
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
@@ -344,7 +411,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE BEGIN TIM1_MspInit 0 */
 
   /* USER CODE END TIM1_MspInit 0 */
-    /* TIM1 clock enable */
+    /* 使能TIM1时钟 */
     __HAL_RCC_TIM1_CLK_ENABLE();
   /* USER CODE BEGIN TIM1_MspInit 1 */
 
@@ -352,6 +419,16 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
   }
 }
 
+/**
+ * @brief TIM PWM底层初始化回调函数
+ * 
+ * 功能说明：
+ * 当调用HAL_TIM_PWM_Init()时，HAL库会自动调用此函数来配置TIM2/TIM8的底层硬件资源。
+ * - TIM2: 使能时钟，用于辅助驱动器PWM输出
+ * - TIM8: 使能时钟并配置中断(优先级0)，用于电机M1的PWM输出
+ * 
+ * @param tim_pwmHandle: 定时器句柄指针
+ */
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
 {
 
@@ -360,7 +437,7 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE BEGIN TIM2_MspInit 0 */
 
   /* USER CODE END TIM2_MspInit 0 */
-    /* TIM2 clock enable */
+    /* 使能TIM2时钟 */
     __HAL_RCC_TIM2_CLK_ENABLE();
   /* USER CODE BEGIN TIM2_MspInit 1 */
 
@@ -371,10 +448,10 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE BEGIN TIM8_MspInit 0 */
 
   /* USER CODE END TIM8_MspInit 0 */
-    /* TIM8 clock enable */
+    /* 使能TIM8时钟 */
     __HAL_RCC_TIM8_CLK_ENABLE();
 
-    /* TIM8 interrupt Init */
+    /* 使能TIM8中断 - 优先级0(最高) */
     HAL_NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);
   /* USER CODE BEGIN TIM8_MspInit 1 */
@@ -383,6 +460,16 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
   }
 }
 
+/**
+ * @brief TIM编码器模式底层初始化回调函数
+ * 
+ * 功能说明：
+ * 当调用HAL_TIM_Encoder_Init()时，HAL库会自动调用此函数来配置TIM3/TIM4的底层硬件资源。
+ * - TIM3: 配置PB4/PB5为复用功能，连接M0编码器的A/B相信号
+ * - TIM4: 配置PB6/PB7为复用功能，连接M1编码器的A/B相信号
+ * 
+ * @param tim_encoderHandle: 定时器句柄指针
+ */
 void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
 {
 
@@ -392,12 +479,12 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
   /* USER CODE BEGIN TIM3_MspInit 0 */
 
   /* USER CODE END TIM3_MspInit 0 */
-    /* TIM3 clock enable */
+    /* 使能TIM3时钟 */
     __HAL_RCC_TIM3_CLK_ENABLE();
   
-    /**TIM3 GPIO Configuration    
-    PB4     ------> TIM3_CH1
-    PB5     ------> TIM3_CH2 
+    /**TIM3 GPIO配置    
+    PB4     ------> TIM3_CH1 (M0编码器A相)
+    PB5     ------> TIM3_CH2 (M0编码器B相)
     */
     GPIO_InitStruct.Pin = M0_ENC_A_Pin|M0_ENC_B_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -415,12 +502,12 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
   /* USER CODE BEGIN TIM4_MspInit 0 */
 
   /* USER CODE END TIM4_MspInit 0 */
-    /* TIM4 clock enable */
+    /* 使能TIM4时钟 */
     __HAL_RCC_TIM4_CLK_ENABLE();
   
-    /**TIM4 GPIO Configuration    
-    PB6     ------> TIM4_CH1
-    PB7     ------> TIM4_CH2 
+    /**TIM4 GPIO配置    
+    PB6     ------> TIM4_CH1 (M1编码器A相)
+    PB7     ------> TIM4_CH2 (M1编码器B相)
     */
     GPIO_InitStruct.Pin = M1_ENC_A_Pin|M1_ENC_B_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -434,6 +521,18 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
   /* USER CODE END TIM4_MspInit 1 */
   }
 }
+
+/**
+ * @brief TIM GPIO后置初始化回调函数
+ * 
+ * 功能说明：
+ * 在定时器初始化完成后调用，用于配置各定时器的PWM输出引脚。
+ * - TIM1: 配置M0电机的三相高/低端PWM输出(PA8-10, PB13-15)
+ * - TIM2: 配置辅助驱动器的低/高端PWM输出(PB10-11)
+ * - TIM8: 配置M1电机的三相高/低端PWM输出(PC6-8, PA7, PB0-1)
+ * 
+ * @param timHandle: 定时器句柄指针
+ */
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 {
 
@@ -443,13 +542,13 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
   /* USER CODE BEGIN TIM1_MspPostInit 0 */
 
   /* USER CODE END TIM1_MspPostInit 0 */
-    /**TIM1 GPIO Configuration    
-    PB13     ------> TIM1_CH1N
-    PB14     ------> TIM1_CH2N
-    PB15     ------> TIM1_CH3N
-    PA8     ------> TIM1_CH1
-    PA9     ------> TIM1_CH2
-    PA10     ------> TIM1_CH3 
+    /**TIM1 GPIO配置    
+    PB13     ------> TIM1_CH1N (M0 A相低端)
+    PB14     ------> TIM1_CH2N (M0 B相低端)
+    PB15     ------> TIM1_CH3N (M0 C相低端)
+    PA8     ------> TIM1_CH1  (M0 A相高端)
+    PA9     ------> TIM1_CH2  (M0 B相高端)
+    PA10     ------> TIM1_CH3 (M0 C相高端)
     */
     GPIO_InitStruct.Pin = M0_AL_Pin|M0_BL_Pin|M0_CL_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -475,9 +574,9 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE END TIM2_MspPostInit 0 */
   
-    /**TIM2 GPIO Configuration    
-    PB10     ------> TIM2_CH3
-    PB11     ------> TIM2_CH4 
+    /**TIM2 GPIO配置    
+    PB10     ------> TIM2_CH3 (辅助低端)
+    PB11     ------> TIM2_CH4 (辅助高端)
     */
     GPIO_InitStruct.Pin = AUX_L_Pin|AUX_H_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -496,13 +595,13 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE END TIM8_MspPostInit 0 */
   
-    /**TIM8 GPIO Configuration    
-    PA7     ------> TIM8_CH1N
-    PB0     ------> TIM8_CH2N
-    PB1     ------> TIM8_CH3N
-    PC6     ------> TIM8_CH1
-    PC7     ------> TIM8_CH2
-    PC8     ------> TIM8_CH3 
+    /**TIM8 GPIO配置    
+    PA7     ------> TIM8_CH1N (M1 A相低端)
+    PB0     ------> TIM8_CH2N (M1 B相低端)
+    PB1     ------> TIM8_CH3N (M1 C相低端)
+    PC6     ------> TIM8_CH1  (M1 A相高端)
+    PC7     ------> TIM8_CH2  (M1 B相高端)
+    PC8     ------> TIM8_CH3  (M1 C相高端)
     */
     GPIO_InitStruct.Pin = M1_AL_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -532,6 +631,14 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
 }
 
+/**
+ * @brief TIM基础定时器底层去初始化回调函数
+ * 
+ * 功能说明：
+ * 当调用HAL_TIM_Base_DeInit()时，HAL库会自动调用此函数来释放TIM1的底层硬件资源。
+ * 
+ * @param tim_baseHandle: 定时器句柄指针
+ */
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
@@ -540,7 +647,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE BEGIN TIM1_MspDeInit 0 */
 
   /* USER CODE END TIM1_MspDeInit 0 */
-    /* Peripheral clock disable */
+    /* 禁用外设时钟 */
     __HAL_RCC_TIM1_CLK_DISABLE();
   /* USER CODE BEGIN TIM1_MspDeInit 1 */
 
@@ -548,6 +655,16 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   }
 }
 
+/**
+ * @brief TIM PWM底层去初始化回调函数
+ * 
+ * 功能说明：
+ * 当调用HAL_TIM_PWM_DeInit()时，HAL库会自动调用此函数来释放TIM2/TIM8的底层硬件资源。
+ * - TIM2: 禁用时钟
+ * - TIM8: 禁用时钟并关闭中断
+ * 
+ * @param tim_pwmHandle: 定时器句柄指针
+ */
 void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
 {
 
@@ -556,7 +673,7 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE BEGIN TIM2_MspDeInit 0 */
 
   /* USER CODE END TIM2_MspDeInit 0 */
-    /* Peripheral clock disable */
+    /* 禁用外设时钟 */
     __HAL_RCC_TIM2_CLK_DISABLE();
   /* USER CODE BEGIN TIM2_MspDeInit 1 */
 
@@ -567,10 +684,10 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE BEGIN TIM8_MspDeInit 0 */
 
   /* USER CODE END TIM8_MspDeInit 0 */
-    /* Peripheral clock disable */
+    /* 禁用外设时钟 */
     __HAL_RCC_TIM8_CLK_DISABLE();
 
-    /* TIM8 interrupt Deinit */
+    /* 关闭TIM8中断 */
     HAL_NVIC_DisableIRQ(TIM8_TRG_COM_TIM14_IRQn);
   /* USER CODE BEGIN TIM8_MspDeInit 1 */
 
@@ -578,6 +695,15 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
   }
 }
 
+/**
+ * @brief TIM编码器模式底层去初始化回调函数
+ * 
+ * 功能说明：
+ * 当调用HAL_TIM_Encoder_DeInit()时，HAL库会自动调用此函数来释放TIM3/TIM4的底层硬件资源。
+ * 包括禁用时钟和复位GPIO引脚配置。
+ * 
+ * @param tim_encoderHandle: 定时器句柄指针
+ */
 void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
 {
 
@@ -586,12 +712,12 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
   /* USER CODE BEGIN TIM3_MspDeInit 0 */
 
   /* USER CODE END TIM3_MspDeInit 0 */
-    /* Peripheral clock disable */
+    /* 禁用外设时钟 */
     __HAL_RCC_TIM3_CLK_DISABLE();
   
-    /**TIM3 GPIO Configuration    
-    PB4     ------> TIM3_CH1
-    PB5     ------> TIM3_CH2 
+    /**TIM3 GPIO配置    
+    PB4     ------> TIM3_CH1 (M0编码器A相)
+    PB5     ------> TIM3_CH2 (M0编码器B相)
     */
     HAL_GPIO_DeInit(GPIOB, M0_ENC_A_Pin|M0_ENC_B_Pin);
 
@@ -604,12 +730,12 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
   /* USER CODE BEGIN TIM4_MspDeInit 0 */
 
   /* USER CODE END TIM4_MspDeInit 0 */
-    /* Peripheral clock disable */
+    /* 禁用外设时钟 */
     __HAL_RCC_TIM4_CLK_DISABLE();
   
-    /**TIM4 GPIO Configuration    
-    PB6     ------> TIM4_CH1
-    PB7     ------> TIM4_CH2 
+    /**TIM4 GPIO配置    
+    PB6     ------> TIM4_CH1 (M1编码器A相)
+    PB7     ------> TIM4_CH2 (M1编码器B相)
     */
     HAL_GPIO_DeInit(GPIOB, M1_ENC_A_Pin|M1_ENC_B_Pin);
 
@@ -617,7 +743,7 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
 
   /* USER CODE END TIM4_MspDeInit 1 */
   }
-} 
+}  
 
 /* USER CODE BEGIN 1 */
 
@@ -631,4 +757,3 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

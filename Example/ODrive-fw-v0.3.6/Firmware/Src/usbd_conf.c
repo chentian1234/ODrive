@@ -1,51 +1,29 @@
-/**
-  ******************************************************************************
-  * @file           : usbd_conf.c
-  * @version        : v1.0_Cube
-  * @brief          : This file implements the board support package for the USB device library
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-*/
+/*
+ * ============================================================================
+ * 文件名: usbd_conf.c
+ *
+ * 文件用途:
+ *   本文件实现USB设备库的底层驱动接口（BSP），负责USB OTG FS外设的硬件配置
+ *   和与USB协议栈之间的数据传递。是USB设备库与STM32硬件之间的桥接层。
+ *
+ * 主要功能模块：
+ *   1. HAL_PCD_MspInit/DeInit()：USB OTG FS MSP初始化/去初始化
+ *   2. HAL PCD回调函数：SetupStage、DataIn/Out、SOF、Reset、Suspend/Resume等
+ *   3. USBD_LL_*接口函数：Init/DeInit/Start/Stop/OpenEP/CloseEP等底层操作
+ *   4. USBD_LL_Delay()：USB延时函数（基于HAL_Delay）
+ *   5. HAL_PCDEx_LPM_Callback()：LPM电源管理回调
+ *
+ * USB OTG FS配置:
+ *   - 端点数: 4
+ *   - 速度: 全速(Full Speed, 12Mbps)
+ *   - DMA: 禁用
+ *   - 低功耗: 禁用
+ *   - VBUS检测: 禁用
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal.h"
@@ -80,7 +58,7 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
 
   /* USER CODE END USB_OTG_FS_MspInit 0 */
   
-    /**USB_OTG_FS GPIO Configuration    
+    /**USB_OTG_FS GPIO配置    
     PA11     ------> USB_OTG_FS_DM
     PA12     ------> USB_OTG_FS_DP 
     */
@@ -91,10 +69,10 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
     GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    /* Peripheral clock enable */
+    /* 使能USB外设时钟 */
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
 
-    /* Peripheral interrupt init */
+    /* 外设中断初始化 */
     HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
   /* USER CODE BEGIN USB_OTG_FS_MspInit 1 */
@@ -110,16 +88,16 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* pcdHandle)
   /* USER CODE BEGIN USB_OTG_FS_MspDeInit 0 */
 
   /* USER CODE END USB_OTG_FS_MspDeInit 0 */
-    /* Peripheral clock disable */
+    /* 禁用USB外设时钟 */
     __HAL_RCC_USB_OTG_FS_CLK_DISABLE();
   
-    /**USB_OTG_FS GPIO Configuration    
+    /**USB_OTG_FS GPIO配置    
     PA11     ------> USB_OTG_FS_DM
     PA12     ------> USB_OTG_FS_DP 
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
 
-    /* Peripheral interrupt Deinit*/
+    /* 外设中断去初始化 */
     HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
 
   /* USER CODE BEGIN USB_OTG_FS_MspDeInit 1 */
@@ -129,9 +107,9 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* pcdHandle)
 }
 
 /**
-  * @brief  Setup stage callback
-  * @param  hpcd: PCD handle
-  * @retval None
+  * @brief  建立阶段回调函数
+  * @param  hpcd: PCD句柄
+  * @retval 无
   */
 void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
 {
@@ -139,10 +117,10 @@ void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
 }
 
 /**
-  * @brief  Data Out stage callback.
-  * @param  hpcd: PCD handle
-  * @param  epnum: Endpoint Number
-  * @retval None
+  * @brief  数据输出阶段回调函数
+  * @param  hpcd: PCD句柄
+  * @param  epnum: 端点号
+  * @retval 无
   */
 void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
@@ -150,10 +128,10 @@ void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 }
 
 /**
-  * @brief  Data In stage callback..
-  * @param  hpcd: PCD handle
-  * @param  epnum: Endpoint Number
-  * @retval None
+  * @brief  数据输入阶段回调函数
+  * @param  hpcd: PCD句柄
+  * @param  epnum: 端点号
+  * @retval 无
   */
 void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
@@ -161,9 +139,9 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 }
 
 /**
-  * @brief  SOF callback.
-  * @param  hpcd: PCD handle
-  * @retval None
+  * @brief  SOF(帧起始)回调函数
+  * @param  hpcd: PCD句柄
+  * @retval 无
   */
 void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd)
 {
@@ -171,15 +149,15 @@ void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd)
 }
 
 /**
-  * @brief  Reset callback.
-  * @param  hpcd: PCD handle
-  * @retval None
+  * @brief  复位回调函数
+  * @param  hpcd: PCD句柄
+  * @retval 无
   */
 void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
 { 
   USBD_SpeedTypeDef speed = USBD_SPEED_FULL;
 
-  /*Set USB Current Speed*/
+  /* 设置USB当前速度 */
   switch (hpcd->Init.speed)
   {
   case PCD_SPEED_HIGH:
@@ -195,36 +173,36 @@ void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
   }
   USBD_LL_SetSpeed((USBD_HandleTypeDef*)hpcd->pData, speed);  
   
-  /*Reset Device*/
+  /* 复位设备 */
   USBD_LL_Reset((USBD_HandleTypeDef*)hpcd->pData);
 }
 
 /**
-  * @brief  Suspend callback.
-  * When Low power mode is enabled the debug cannot be used (IAR, Keil doesn't support it)
-  * @param  hpcd: PCD handle
-  * @retval None
+  * @brief  挂起回调函数
+  * 启用低功耗模式时，调试功能不可用(IAR, Keil不支持)
+  * @param  hpcd: PCD句柄
+  * @retval 无
   */
 void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
 {  
-   /* Inform USB library that core enters in suspend Mode */
+   /* 通知USB库核心进入挂起模式 */
   USBD_LL_Suspend((USBD_HandleTypeDef*)hpcd->pData);
   __HAL_PCD_GATE_PHYCLOCK(hpcd);
-  /*Enter in STOP mode */
+  /* 进入STOP模式 */
   /* USER CODE BEGIN 2 */
   if (hpcd->Init.low_power_enable)
   {
-    /* Set SLEEPDEEP bit and SleepOnExit of Cortex System Control Register */
+    /* 设置Cortex系统控制寄存器的SLEEPDEEP位和SleepOnExit位 */
     SCB->SCR |= (uint32_t)((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
   }
   /* USER CODE END 2 */
 }
 
 /**
-  * @brief  Resume callback.
-    When Low power mode is enabled the debug cannot be used (IAR, Keil doesn't support it)
-  * @param  hpcd: PCD handle
-  * @retval None
+  * @brief  恢复回调函数
+  * 启用低功耗模式时，调试功能不可用(IAR, Keil不支持)
+  * @param  hpcd: PCD句柄
+  * @retval 无
   */
 void HAL_PCD_ResumeCallback(PCD_HandleTypeDef *hpcd)
 {
@@ -235,10 +213,10 @@ void HAL_PCD_ResumeCallback(PCD_HandleTypeDef *hpcd)
 }
 
 /**
-  * @brief  ISOC Out Incomplete callback.
-  * @param  hpcd: PCD handle
-  * @param  epnum: Endpoint Number
-  * @retval None
+  * @brief  等时输出未完成回调函数
+  * @param  hpcd: PCD句柄
+  * @param  epnum: 端点号
+  * @retval 无
   */
 void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
@@ -246,10 +224,10 @@ void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 }
 
 /**
-  * @brief  ISOC In Incomplete callback.
-  * @param  hpcd: PCD handle
-  * @param  epnum: Endpoint Number
-  * @retval None
+  * @brief  等时输入未完成回调函数
+  * @param  hpcd: PCD句柄
+  * @param  epnum: 端点号
+  * @retval 无
   */
 void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
@@ -257,9 +235,9 @@ void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 }
 
 /**
-  * @brief  Connect callback.
-  * @param  hpcd: PCD handle
-  * @retval None
+  * @brief  连接回调函数
+  * @param  hpcd: PCD句柄
+  * @retval 无
   */
 void HAL_PCD_ConnectCallback(PCD_HandleTypeDef *hpcd)
 {
@@ -267,9 +245,9 @@ void HAL_PCD_ConnectCallback(PCD_HandleTypeDef *hpcd)
 }
 
 /**
-  * @brief  Disconnect callback.
-  * @param  hpcd: PCD handle
-  * @retval None
+  * @brief  断开连接回调函数
+  * @param  hpcd: PCD句柄
+  * @retval 无
   */
 void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
 {
@@ -277,18 +255,18 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
 }
 
 /*******************************************************************************
-                       LL Driver Interface (USB Device Library --> PCD)
+                       底层驱动接口 (USB设备库 --> PCD)
 *******************************************************************************/
 /**
-  * @brief  Initializes the Low Level portion of the Device driver.
-  * @param  pdev: Device handle
-  * @retval USBD Status
+  * @brief  初始化底层驱动
+  * @param  pdev: 设备句柄
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_Init (USBD_HandleTypeDef *pdev)
 { 
-  /* Init USB_IP */
+  /* 初始化USB_IP */
   if (pdev->id == DEVICE_FS) {
-  /* Link The driver to the stack */	
+  /* 将驱动链接到协议栈 */	
   hpcd_USB_OTG_FS.pData = pdev;
   pdev->pData = &hpcd_USB_OTG_FS; 
   
@@ -316,9 +294,9 @@ USBD_StatusTypeDef  USBD_LL_Init (USBD_HandleTypeDef *pdev)
 }
 
 /**
-  * @brief  De-Initializes the Low Level portion of the Device driver.
-  * @param  pdev: Device handle
-  * @retval USBD Status
+  * @brief  反初始化底层驱动
+  * @param  pdev: 设备句柄
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_DeInit (USBD_HandleTypeDef *pdev)
 {
@@ -348,9 +326,9 @@ USBD_StatusTypeDef  USBD_LL_DeInit (USBD_HandleTypeDef *pdev)
 }
 
 /**
-  * @brief  Starts the Low Level portion of the Device driver. 
-  * @param  pdev: Device handle
-  * @retval USBD Status
+  * @brief  启动底层驱动
+  * @param  pdev: 设备句柄
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_Start(USBD_HandleTypeDef *pdev)
 {
@@ -380,9 +358,9 @@ USBD_StatusTypeDef  USBD_LL_Start(USBD_HandleTypeDef *pdev)
 }
 
 /**
-  * @brief  Stops the Low Level portion of the Device driver.
-  * @param  pdev: Device handle
-  * @retval USBD Status
+  * @brief  停止底层驱动
+  * @param  pdev: 设备句柄
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_Stop (USBD_HandleTypeDef *pdev)
 {
@@ -412,12 +390,12 @@ USBD_StatusTypeDef  USBD_LL_Stop (USBD_HandleTypeDef *pdev)
 }
 
 /**
-  * @brief  Opens an endpoint of the Low Level Driver.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @param  ep_type: Endpoint Type
-  * @param  ep_mps: Endpoint Max Packet Size                 
-  * @retval USBD Status
+  * @brief  打开底层驱动端点
+  * @param  pdev: 设备句柄
+  * @param  ep_addr: 端点地址
+  * @param  ep_type: 端点类型
+  * @param  ep_mps: 端点最大包大小                 
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_OpenEP  (USBD_HandleTypeDef *pdev, 
                                       uint8_t  ep_addr,                                      
@@ -454,10 +432,10 @@ USBD_StatusTypeDef  USBD_LL_OpenEP  (USBD_HandleTypeDef *pdev,
 }
 
 /**
-  * @brief  Closes an endpoint of the Low Level Driver.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @retval USBD Status
+  * @brief  关闭底层驱动端点
+  * @param  pdev: 设备句柄
+  * @param  ep_addr: 端点地址
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_CloseEP (USBD_HandleTypeDef *pdev, uint8_t ep_addr)   
 {
@@ -487,10 +465,10 @@ USBD_StatusTypeDef  USBD_LL_CloseEP (USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 }
 
 /**
-  * @brief  Flushes an endpoint of the Low Level Driver.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @retval USBD Status
+  * @brief  刷新(清除)底层驱动端点
+  * @param  pdev: 设备句柄
+  * @param  ep_addr: 端点地址
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_FlushEP (USBD_HandleTypeDef *pdev, uint8_t ep_addr)   
 {
@@ -520,10 +498,10 @@ USBD_StatusTypeDef  USBD_LL_FlushEP (USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 }
 
 /**
-  * @brief  Sets a Stall condition on an endpoint of the Low Level Driver.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @retval USBD Status
+  * @brief  设置端点STALL状态
+  * @param  pdev: 设备句柄
+  * @param  ep_addr: 端点地址
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_StallEP (USBD_HandleTypeDef *pdev, uint8_t ep_addr)   
 {
@@ -553,10 +531,10 @@ USBD_StatusTypeDef  USBD_LL_StallEP (USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 }
 
 /**
-  * @brief  Clears a Stall condition on an endpoint of the Low Level Driver.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @retval USBD Status
+  * @brief  清除端点STALL状态
+  * @param  pdev: 设备句柄
+  * @param  ep_addr: 端点地址
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_ClearStallEP (USBD_HandleTypeDef *pdev, uint8_t ep_addr)   
 {
@@ -586,10 +564,10 @@ USBD_StatusTypeDef  USBD_LL_ClearStallEP (USBD_HandleTypeDef *pdev, uint8_t ep_a
 }
 
 /**
-  * @brief  Returns Stall condition.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @retval Stall (1: Yes, 0: No)
+  * @brief  返回端点STALL状态
+  * @param  pdev: 设备句柄
+  * @param  ep_addr: 端点地址
+  * @retval STALL状态 (1: 是, 0: 否)
   */
 uint8_t USBD_LL_IsStallEP (USBD_HandleTypeDef *pdev, uint8_t ep_addr)   
 {
@@ -605,10 +583,10 @@ uint8_t USBD_LL_IsStallEP (USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   }
 }
 /**
-  * @brief  Assigns a USB address to the device.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @retval USBD Status
+  * @brief  为设备分配USB地址
+  * @param  pdev: 设备句柄
+  * @param  dev_addr: 设备地址
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_SetUSBAddress (USBD_HandleTypeDef *pdev, uint8_t dev_addr)   
 {
@@ -638,12 +616,12 @@ USBD_StatusTypeDef  USBD_LL_SetUSBAddress (USBD_HandleTypeDef *pdev, uint8_t dev
 }
 
 /**
-  * @brief  Transmits data over an endpoint.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @param  pbuf: Pointer to data to be sent
-  * @param  size: Data size    
-  * @retval USBD Status
+  * @brief  通过端点传输数据
+  * @param  pdev: 设备句柄
+  * @param  ep_addr: 端点地址
+  * @param  pbuf: 要发送的数据指针
+  * @param  size: 数据大小    
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_Transmit (USBD_HandleTypeDef *pdev, 
                                       uint8_t  ep_addr,                                      
@@ -676,12 +654,12 @@ USBD_StatusTypeDef  USBD_LL_Transmit (USBD_HandleTypeDef *pdev,
 }
 
 /**
-  * @brief  Prepares an endpoint for reception.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @param  pbuf: Pointer to data to be received
-  * @param  size: Data size
-  * @retval USBD Status
+  * @brief  准备端点接收数据
+  * @param  pdev: 设备句柄
+  * @param  ep_addr: 端点地址
+  * @param  pbuf: 要接收的数据指针
+  * @param  size: 数据大小
+  * @retval USBD状态
   */
 USBD_StatusTypeDef  USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev, 
                                            uint8_t  ep_addr,                                      
@@ -714,10 +692,10 @@ USBD_StatusTypeDef  USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev,
 }
 
 /**
-  * @brief  Returns the last transfered packet size.
-  * @param  pdev: Device handle
-  * @param  ep_addr: Endpoint Number
-  * @retval Recived Data Size
+  * @brief  返回最后一次传输的数据包大小
+  * @param  pdev: 设备句柄
+  * @param  ep_addr: 端点地址
+  * @retval 接收到的数据大小
   */
 uint32_t USBD_LL_GetRxDataSize  (USBD_HandleTypeDef *pdev, uint8_t  ep_addr)  
 {
@@ -726,10 +704,10 @@ uint32_t USBD_LL_GetRxDataSize  (USBD_HandleTypeDef *pdev, uint8_t  ep_addr)
 
 #if (USBD_LPM_ENABLED == 1)
 /**
-  * @brief  HAL_PCDEx_LPM_Callback : Send LPM message to user layer
-  * @param  hpcd: PCD handle
-  * @param  msg: LPM message
-  * @retval HAL status
+  * @brief  HAL_PCDEx_LPM回调函数: 发送LPM消息到用户层
+  * @param  hpcd: PCD句柄
+  * @param  msg: LPM消息
+  * @retval HAL状态
   */
 void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
 {
@@ -740,7 +718,7 @@ void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
     {
       SystemClock_Config();
       
-      /* Reset SLEEPDEEP bit of Cortex System Control Register */
+      /* 重置Cortex系统控制寄存器的SLEEPDEEP位 */
       SCB->SCR &= (uint32_t)~((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
     }
     __HAL_PCD_UNGATE_PHYCLOCK(hpcd);
@@ -751,10 +729,10 @@ void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
     __HAL_PCD_GATE_PHYCLOCK(hpcd);
     USBD_LL_Suspend(hpcd->pData);
     
-    /*Enter in STOP mode */
+    /* 进入STOP模式 */
     if (hpcd->Init.low_power_enable)
     {   
-      /* Set SLEEPDEEP bit and SleepOnExit of Cortex System Control Register */
+      /* 设置Cortex系统控制寄存器的SLEEPDEEP位和SleepOnExit位 */
       SCB->SCR |= (uint32_t)((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
     }     
     break;   
@@ -762,12 +740,12 @@ void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
 }
 #endif
 /**
-  * @brief  Delays routine for the USB Device Library.
-  * @param  Delay: Delay in ms
-  * @retval None
+  * @brief  USB设备库延时函数
+  * @param  Delay: 延时时间(毫秒)
+  * @retval 无
   */
 void  USBD_LL_Delay (uint32_t Delay)
 {
   HAL_Delay(Delay);  
 }
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+

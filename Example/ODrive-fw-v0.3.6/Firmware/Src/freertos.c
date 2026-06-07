@@ -1,50 +1,33 @@
-/**
-  ******************************************************************************
-  * File Name          : freertos.c
-  * Description        : Code for freertos applications
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+/*
+ * ============================================================================
+ * 文件名: freertos.c
+ *
+ * 文件用途:
+ *   本文件实现FreeRTOS实时操作系统的任务与信号量配置，是ODrive固件的多任务
+ *   调度核心。负责创建电机控制、通信、命令解析等所有任务，并配置用于任务间
+ *   同步的信号量。
+ *
+ * 主要功能模块：
+ *   1. MX_FREERTOS_Init()：创建信号量（USB中断、UART DMA、USB收发）
+ *   2. StartDefaultTask()：默认任务函数，初始化所有子系统并创建工作线程
+ *
+ * 任务优先级（从高到低）:
+ *   - osPriorityHigh+1: 电机0控制线程（最高优先级，硬实时）
+ *   - osPriorityHigh:   电机1控制线程（高优先级，实时控制）
+ *   - osPriorityNormal: 命令解析线程（处理UART/USB命令）
+ *   - osPriorityNormal: USB处理线程（处理USB中断与数据收发）
+ *   - osPriorityBelowNormal: 数据包定时器线程（后台检查）
+ *
+ * 信号量说明:
+ *   - sem_usb_irq: USB中断信号量（ISR通知处理线程）
+ *   - sem_uart_dma: UART DMA互斥信号量
+ *   - sem_usb_rx: USB接收同步信号量
+ *   - sem_usb_tx: USB发送同步信号量
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
@@ -135,13 +118,13 @@ osThreadId defaultTaskHandle;
 void StartDefaultTask(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
-void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+void MX_FREERTOS_Init(void); /* MISRA C 2004 规则 8.1 */
 
 /* USER CODE BEGIN FunctionPrototypes */
 
 /* USER CODE END FunctionPrototypes */
 
-/* Hook prototypes */
+/* 钩子函数原型 */
 
 /**
  * @brief FreeRTOS初始化函数
@@ -177,7 +160,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
+  /* 添加互斥锁 ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -206,7 +189,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
+  /* 启动定时器，添加新定时器 ... */
   /* USER CODE END RTOS_TIMERS */
 
   /* 创建默认任务线程 */
@@ -219,7 +202,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+  /* 添加队列 ... */
   /* USER CODE END RTOS_QUEUES */
 }
 
@@ -314,4 +297,3 @@ void StartDefaultTask(void const * argument)
 
 /* USER CODE END Application */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

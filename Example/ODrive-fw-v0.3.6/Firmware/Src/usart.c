@@ -1,51 +1,28 @@
-/**
-  ******************************************************************************
-  * File Name          : USART.c
-  * Description        : This file provides code for the configuration
-  *                      of the USART instances.
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V.
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice,
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other
-  *    contributors to this software may be used to endorse or promote products
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under
-  *    this license is void and will automatically terminate your rights under
-  *    this license.
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+/*
+ * ============================================================================
+ * 文件名: usart.c
+ *
+ * 文件用途:
+ *   本文件实现STM32F4 UART4串口通信外设的驱动配置，支持DMA传输以降低CPU负载。
+ *   UART用于与上位机进行命令行通信、调试输出和数据采集。
+ *
+ * 主要功能模块：
+ *   1. UART4初始化：115200波特率、8N1格式、发送+接收模式
+ *   2. DMA接收配置：DMA1_Stream2，外设→内存，循环模式
+ *   3. DMA发送配置：DMA1_Stream4，内存→外设，正常模式
+ *   4. MSP层初始化/去初始化：GPIO引脚配置、DMA配置、中断配置
+ *
+ * 通信参数:
+ *   - 波特率: 115200
+ *   - 数据位: 8位
+ *   - 停止位: 1位
+ *   - 校验位: 无
+ *   - 过采样: 16倍
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
@@ -61,7 +38,26 @@ UART_HandleTypeDef huart4;
 DMA_HandleTypeDef hdma_uart4_rx;
 DMA_HandleTypeDef hdma_uart4_tx;
 
-/* UART4 init function */
+/**
+ * @brief UART4 初始化函数
+ * 
+ * 功能说明：
+ * 配置UART4用于串口通信，支持DMA传输以降低CPU负载。
+ * 
+ * 串口参数：
+ * - 波特率: 115200
+ * - 数据位: 8位
+ * - 停止位: 1位
+ * - 校验位: 无
+ * - 工作模式: 发送+接收
+ * - 过采样: 16倍过采样
+ * 
+ * DMA配置：
+ * - UART4_RX: DMA1_Stream2，通道4，外设到内存，循环模式
+ * - UART4_TX: DMA1_Stream4，通道4，内存到外设，正常模式
+ * 
+ * 注意：UART4的TX/RX引脚可通过SetGPIO12toUART()动态切换
+ */
 void MX_UART4_Init(void) {
 
     huart4.Instance = UART4;
@@ -85,10 +81,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle) {
         /* USER CODE BEGIN UART4_MspInit 0 */
 
         /* USER CODE END UART4_MspInit 0 */
-        /* UART4 clock enable */
+        /* 使能UART4时钟 */
         __HAL_RCC_UART4_CLK_ENABLE();
 
-        /**UART4 GPIO Configuration
+        /**UART4 GPIO配置
         PA0-WKUP     ------> UART4_TX
         PA1     ------> UART4_RX
         */
@@ -106,8 +102,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle) {
         GPIO_InitStruct.Alternate = GPIO_AF8_UART4;
         HAL_GPIO_Init(GPIO_2_GPIO_Port, &GPIO_InitStruct);
 
-        /* UART4 DMA Init */
-        /* UART4_RX Init */
+        /* UART4 DMA初始化 */
+        /* UART4接收DMA初始化 */
         hdma_uart4_rx.Instance = DMA1_Stream2;
         hdma_uart4_rx.Init.Channel = DMA_CHANNEL_4;
         hdma_uart4_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
@@ -124,7 +120,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle) {
 
         __HAL_LINKDMA(uartHandle,hdmarx,hdma_uart4_rx);
 
-        /* UART4_TX Init */
+        /* UART4发送DMA初始化 */
         hdma_uart4_tx.Instance = DMA1_Stream4;
         hdma_uart4_tx.Init.Channel = DMA_CHANNEL_4;
         hdma_uart4_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
@@ -141,7 +137,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle) {
 
         __HAL_LINKDMA(uartHandle,hdmatx,hdma_uart4_tx);
 
-        /* UART4 interrupt Init */
+        /* UART4中断初始化 */
         HAL_NVIC_SetPriority(UART4_IRQn, 5, 0);
         HAL_NVIC_EnableIRQ(UART4_IRQn);
         /* USER CODE BEGIN UART4_MspInit 1 */
@@ -156,20 +152,20 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle) {
         /* USER CODE BEGIN UART4_MspDeInit 0 */
 
         /* USER CODE END UART4_MspDeInit 0 */
-        /* Peripheral clock disable */
+        /* 禁用UART4外设时钟 */
         __HAL_RCC_UART4_CLK_DISABLE();
 
-        /**UART4 GPIO Configuration
+        /**UART4 GPIO配置
         PA0-WKUP     ------> UART4_TX
         PA1     ------> UART4_RX
         */
         HAL_GPIO_DeInit(GPIOA, GPIO_1_Pin|GPIO_2_Pin);
 
-        /* UART4 DMA DeInit */
+        /* UART4 DMA去初始化 */
         HAL_DMA_DeInit(uartHandle->hdmarx);
         HAL_DMA_DeInit(uartHandle->hdmatx);
 
-        /* UART4 interrupt Deinit */
+        /* UART4中断去初始化 */
         HAL_NVIC_DisableIRQ(UART4_IRQn);
         /* USER CODE BEGIN UART4_MspDeInit 1 */
 
@@ -189,4 +185,3 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle) {
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

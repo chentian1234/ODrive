@@ -1,51 +1,21 @@
-/**
-  ******************************************************************************
-  * File Name          : dma.c
-  * Description        : This file provides code for the configuration
-  *                      of all the requested memory to memory DMA transfers.
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+/*
+ * ============================================================================
+ * 文件名: dma.c
+ *
+ * 文件用途:
+ *   本文件实现STM32F4 DMA控制器的配置，用于外设与内存之间的高速数据传输。
+ *   DMA允许外设（如UART）直接与内存交换数据，无需CPU干预，降低系统负载。
+ *
+ * 主要功能模块：
+ *   1. DMA1控制器初始化
+ *   2. DMA1_Stream2配置：UART4接收（外设→内存，循环模式）
+ *   3. DMA1_Stream4配置：UART4发送（内存→外设，正常模式）
+ *   4. DMA中断优先级配置（优先级5）
+ *
+ * 作者: ODrive Robotics
+ * 版本: v0.3.6
+ * ============================================================================
+ */
 /* Includes ------------------------------------------------------------------*/
 #include "dma.h"
 
@@ -54,7 +24,7 @@
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
-/* Configure DMA                                                              */
+/* 配置DMA控制器                                                              */
 /*----------------------------------------------------------------------------*/
 
 /* USER CODE BEGIN 1 */
@@ -62,18 +32,31 @@
 /* USER CODE END 1 */
 
 /** 
-  * Enable DMA controller clock
-  */
+ * @brief DMA控制器初始化函数
+ * 
+ * 功能说明：
+ * 初始化DMA1控制器，配置DMA通道用于外设与内存之间的高速数据传输。
+ * DMA允许外设（如UART、ADC、SPI等）直接与内存交换数据，无需CPU干预，
+ * 从而大大降低CPU负载，提高系统性能。
+ * 
+ * 配置的DMA流：
+ * - DMA1_Stream2: 用于UART4接收（外设到内存方向）
+ *   - 中断优先级: 5
+ * - DMA1_Stream4: 用于UART4发送（内存到外设方向）
+ *   - 中断优先级: 5
+ * 
+ * 注意：具体的DMA通道配置（如数据宽度、传输模式等）在各外设的初始化函数中完成。
+ */
 void MX_DMA_Init(void) 
 {
-  /* DMA controller clock enable */
+  /* 使能DMA1控制器时钟 */
   __HAL_RCC_DMA1_CLK_ENABLE();
 
-  /* DMA interrupt init */
-  /* DMA1_Stream2_IRQn interrupt configuration */
+  /* DMA中断初始化 */
+  /* DMA1_Stream2_IRQn中断配置 - 用于UART4接收 */
   HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
-  /* DMA1_Stream4_IRQn interrupt configuration */
+  /* DMA1_Stream4_IRQn中断配置 - 用于UART4发送 */
   HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
 
@@ -91,4 +74,3 @@ void MX_DMA_Init(void)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
